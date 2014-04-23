@@ -13,16 +13,17 @@ function usage {
 # Get the full path of the current directory
 fullpath=`readlink -f "${PWD}"`
 basedir="${fullpath}"
-stagingdir=`readlink -f "${PWD}/.."`
+scriptdirpath=`readlink -f $0`
+scriptdir=`dirname ${scriptdirpath}`
 ignoresnapshots="false"
 debug=0
 unknown_option=0
 profiles="integrationtests"
 # By default use a localrepodir for deploy and local resolution that is in the current directory
 localrepodir="${basedir}/localrepodir"
-stagingrepodir="${stagingdir}/stagingrepodir"
-logsdir="${basedir}/logs"
-settingsfile="${HOME}/.m2/settings.xml"
+stagingrepodir="${scriptdir}/stagingreleases"
+logsdir="${scriptdir}/logs"
+settingsfile="${scriptdir}/localreleasesettings.xml"
 localm2repo="${basedir}/.m2repo"
 while true ; do
     case "$1" in
