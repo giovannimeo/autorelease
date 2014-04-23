@@ -1,5 +1,0 @@
-#!/bin/bash
-
-stagingrepo='/home/gmeo/Work/csdn/workspace/stagingrepodir'
-
-mvn -Dwagon.source="file://${PWD}/localrepodir" -Dwagon.target="file://${stagingrepo}" wagon:merge-maven-repos

@@ -2,7 +2,6 @@
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
                               http://maven.apache.org/xsd/settings-1.0.0.xsd">
-  <localRepository>/home/gmeo/.m2/repository</localRepository>
   <profiles>
     <profile>
     <id>stagingrepodir</id>
@@ -10,7 +9,7 @@
       <repository>
         <id>stagingrepodir</id>
         <name>stagingrepodir</name>
-        <url>file:///home/gmeo/Work/csdn/workspace/stagingrepodir</url>
+        <url>file://#STAGINGREPODIR#</url>
         <releases>
           <enabled>true</enabled>
         </releases>
@@ -23,7 +22,18 @@
       <pluginRepository>
         <id>stagingrepodir</id>
         <name>stagingrepodir</name>
-        <url>file:///home/gmeo/Work/csdn/workspace/stagingrepodir</url>
+        <url>file://#STAGINGREPODIR#</url>
+        <releases>
+          <enabled>true</enabled>
+        </releases>
+        <snapshots>
+          <enabled>true</enabled>
+        </snapshots>
+      </pluginRepository>
+      <pluginRepository>
+        <id>toolsrepodir</id>
+        <name>toolsrepodir</name>
+        <url>file://#TOOLSREPODIR#</url>
         <releases>
           <enabled>true</enabled>
         </releases>

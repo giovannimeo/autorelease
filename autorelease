@@ -1,0 +1,53 @@
+#!/bin/bash
+
+autoreleasefullpath=`readlink -f $0`
+autoreleasebasedir=`dirname ${autoreleasefullpath}`
+# GIT root for the ODL repositories
+odlreporoot="https://git.opendaylight.org/gerrit/"
+# GIT root for the mirrors if any to push the tags
+gitpushroot=""
+repositoryList="yangtools.git controller.git ovsdb.git openflowjava.git openflowplugin.git bgpcep.git affinity.git"
+repogitbase="${autoreleasebasedir}/gits"
+stagingreleases="${autoreleasebasedir}/stagingreleases"
+toolsrepodir="${autoreleasebasedir}/toolsrepo"
+settingstemplatefile="${autoreleasebasedir}/localreleasesettings.xml.tmpl"
+settingsfile="${autoreleasebasedir}/localreleasesettings.xml"
+branchforrelease='origin/master'
+logdir="${autoreleasebasedir}/logs"
+
+# Cleanup
+rm -rf "${repogitbase}"
+mkdir -p "${repogitbase}"
+rm -rf "${stagingreleases}"
+mkdir -p "${stagingreleases}"
+rm -rf "${settingsfile}"
+rm -rf "${logdir}"
+mkdir -p "${logdir}"
+
+# Now lets create localreleasesettings.xml
+cp "${settingstemplatefile}" "${settingsfile}"
+sed -i "s!#STAGINGREPODIR#!${stagingreleases}!g" "${settingsfile}"
+sed -i "s!#TOOLSREPODIR#!${toolsrepodir}!g" "${settingsfile}"
+
+for repo in $repositoryList; do
+    cd "${repogitbase}"
+    git clone "${odlreporoot}/${repo}" "${repo}"|| exit 1
+    cd "${repogitbase}/${repo}"
+    localm2repo="${repogitbase}/${repo}/.m2repo"
+    localdeployrepo="${repogitbase}/${repo}/deployrepo"
+    locallogsdir="${logdir}/${repo}"
+    mkdir -p "${locallogsdir}"
+    git checkout ${branchforrelease} -B baseforrelease
+    # Update the version to the latest ones in the repo
+    mvn -Dmaven.repo.local="${localm2repo}" -U -s "${settingsfile}" -Dincludes='org.opendaylight*' -Pstagingrepodir -B org.codehaus.mojo:versions-maven-plugin:2.2-autorelease-SNAPSHOT:use-latest-versions -l "${locallogsdir}/changeversion.log"
+    # Commit the change done by use-latest-versions
+    git commit -a -s -m "Updated to newer local release versions" && echo "Updated artifacts"
+    
+    #${autoreleasebasedir}/localrelease --stagingrepodir "${stagingreleases}" --localrepodir "${localdeployrepo}" && echo "Release failed for ${repo}" || exit 1
+    
+    # Now stage the released artifacts
+    mvn -Dwagon.source="file://${localdeployrepo}" -Dwagon.target="file://${stagingreleases}" wagon:merge-maven-repos -l "${locallogsdir}/merge-maven-repos.log"
+done
+
+# On success exit with result 0
+exit 0

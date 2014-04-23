@@ -84,4 +84,6 @@ localreleasetag="localrelease-tag-${lockedversion}"
 git checkout -f "${basebranch}" -b "${localreleasebranch}" && mvn -Dmaven.repo.remote="file:///${stagingrepodir}" -Dreleaseplugin.version=2.5 -Dmaven.release.version=2.5 -B release:prepare -DpushChanges=false -Dtag="${localreleasetag}" -DcompletionGoals="help:system" -DpreparationGoals="clean install" -DignoreSnapshots=${ignoresnapshots} "${profiles}" -Darguments="-Dmaven.repo.remote=file:///${stagingrepodir} ${profiles}" || exit 1
 
 # Now try to do a local deployment to make sure we can deploy the files appropriately
-git checkout -f "${localreleasetag}" && mvn -DaltDeploymentRepository="localdir::default::file:///${localrepodir}" clean deploy
+git checkout -f "${localreleasetag}" && mvn -DaltDeploymentRepository="localdir::default::file:///${localrepodir}" clean deploy || exit 1
+
+exit 0
