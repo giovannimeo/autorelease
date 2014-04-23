@@ -1,0 +1,3 @@
+- autorelease is the driver script that does the whole job
+- localrelease is the workhorse on a single repo
+
