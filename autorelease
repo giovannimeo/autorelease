@@ -38,7 +38,7 @@ for repo in $repositoryList; do
     localdeployrepo="${repogitbase}/${repo}/deployrepo"
     locallogsdir="${logdir}/${repo}"
     mkdir -p "${locallogsdir}"
-    git checkout ${branchforrelease} -B baseforrelease
+    git checkout ${branchforrelease} -b baseforrelease
     # Update the version to the latest ones in the repo
     mvn -Dmaven.repo.local="${localm2repo}" -U -s "${settingsfile}" -Dincludes='org.opendaylight*' -P"stagingrepodir,${mavenprofiles}" -B org.codehaus.mojo:versions-maven-plugin:2.2-autorelease-SNAPSHOT:use-latest-versions -l "${locallogsdir}/changeversion.log"
     # Commit the change done by use-latest-versions
