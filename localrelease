@@ -1,0 +1,87 @@
+#!/bin/bash
+
+# This script force maven release plugin 2.5 because it has:
+# http://jira.codehaus.org/browse/MRELEASE-767
+# http://jira.codehaus.org/browse/MRELEASE-812
+# Very much needed for GIT repositories
+
+function usage {
+    echo "Usage: $0 [--ignoresnapshots] [--debug] [--localrepodir <local repo directory>] [--stagingrepodir <staging repo directory>]"
+    exit 1
+}
+
+# Get the full path of the current directory
+fullpath=`readlink -f "${PWD}"`
+basedir="${fullpath}"
+stagingdir=`readlink -f "${PWD}/.."`
+ignoresnapshots="false"
+debug=0
+unknown_option=0
+profiles="-Pintegrationtests"
+# By default use a localrepodir for deploy and local resolution that is in the current directory
+localrepodir="${basedir}/localrepodir"
+stagingrepodir="${stagingdir}/stagingrepodir"
+while true ; do
+    case "$1" in
+        --ignoresnapshots) ignoresnapshots="true"; shift;;
+        --debug) debug=1; shift;;
+        --localrepodir) shift; localrepodir="$1"; shift;;
+        --stagingrepodir) shift; stagingrepodir="$1"; shift;;
+	-*) echo "Unknown option $1"; unknown_option=1; shift;;
+	*) break ;;
+    esac
+done
+
+if [ "${unknown_option}" == "1" ]; then
+    usage
+    exit 1
+fi
+
+echo "LOCALRepo Directory is: ${localrepodir}"
+echo "STAGINGRepo Directory is: ${stagingrepodir}"
+
+gitshorthead=`git log --pretty="%h" -n 1`
+if [ "${gitshorthead}" != "" ]; then gitshorthead="_${gitshorthead}"; fi
+lockedversion="`date '+v%Y%m%d%H%M%S'`${gitshorthead}"
+
+if [ ${debug} == 1 ]; then
+    echo "VERSION:${lockedversion}"
+fi
+
+# Make sure to escape /\: so if you want to get \: you have to write \\\:
+#localscm="scm\\\:git\\\:ssh\\\:\/\/xnc-build.cisco.com\/gerrit\\\:29418\/odp-openflowjava-mirror"
+
+basebranch="baseforrelease"
+git show-ref --verify --quiet "refs/heads/${basebranch}"
+branchdoesntexist=$?
+if [ ${branchdoesntexist} != 0 ]; then
+    git update-ref "refs/heads/${basebranch}" origin/master
+fi
+
+preparationbranch="preparation-branch-${lockedversion}"
+preparationtag="preparation-tag-${lockedversion}"
+
+# Checkout new branch and try to prepare for the release
+# with the expected version number
+git checkout -f "${basebranch}" -b "${preparationbranch}" && mvn -Dmaven.repo.remote="file:///${stagingrepodir}" -Dreleaseplugin.version=2.5 -Dmaven.release.version=2.5 -B release:clean release:prepare -DpushChanges=false -Dtag="${preparationtag}" -DcompletionGoals="help:system" -DpreparationGoals="clean install" -DignoreSnapshots=${ignoresnapshots} "${profiles}" -Darguments="-Dmaven.repo.remote=file:///${stagingrepodir} ${profiles}" || exit 1
+
+# Remove completedPhase so we can reuse the release.properties from scratch
+sed -i '/^completedPhase/d' release.properties
+
+# Now replace all the project.rel with the timestamped version
+sed -i "s/\(^project\.rel\.[^=]*\)=\(.*\)/\1=\2-${lockedversion}/" release.properties
+
+# Now replace the SCM with the appropriate developer connection
+#sed -i "s/\(^project\.scm\.[^=]*\.developerConnection\)=\(.*\)/\1=${localscm}/" release.properties
+#sed -i "s/\(^project\.scm\.[^=]*\.connection\)=\(.*\)/\1=${localscm}/" release.properties
+#sed -i "s/\(^scm\.url\)=\(.*\)/\1=${localscm}/" release.properties
+
+localreleasebranch="localrelease-branch-${lockedversion}"
+localreleasetag="localrelease-tag-${lockedversion}"
+
+# Now attempt to do a release prepare, this time the branch will be the one will be pushed as well
+# the tag that will be pushed
+git checkout -f "${basebranch}" -b "${localreleasebranch}" && mvn -Dmaven.repo.remote="file:///${stagingrepodir}" -Dreleaseplugin.version=2.5 -Dmaven.release.version=2.5 -B release:prepare -DpushChanges=false -Dtag="${localreleasetag}" -DcompletionGoals="help:system" -DpreparationGoals="clean install" -DignoreSnapshots=${ignoresnapshots} "${profiles}" -Darguments="-Dmaven.repo.remote=file:///${stagingrepodir} ${profiles}" || exit 1
+
+# Now try to do a local deployment to make sure we can deploy the files appropriately
+git checkout -f "${localreleasetag}" && mvn -DaltDeploymentRepository="localdir::default::file:///${localrepodir}" clean deploy
