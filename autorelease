@@ -14,6 +14,7 @@ settingstemplatefile="${autoreleasebasedir}/localreleasesettings.xml.tmpl"
 settingsfile="${autoreleasebasedir}/localreleasesettings.xml"
 branchforrelease='origin/master'
 logdir="${autoreleasebasedir}/logs"
+mavenprofiles="integrationtests"
 
 # Cleanup
 rm -rf "${repogitbase}"
@@ -39,11 +40,11 @@ for repo in $repositoryList; do
     mkdir -p "${locallogsdir}"
     git checkout ${branchforrelease} -B baseforrelease
     # Update the version to the latest ones in the repo
-    mvn -Dmaven.repo.local="${localm2repo}" -U -s "${settingsfile}" -Dincludes='org.opendaylight*' -Pstagingrepodir -B org.codehaus.mojo:versions-maven-plugin:2.2-autorelease-SNAPSHOT:use-latest-versions -l "${locallogsdir}/changeversion.log"
+    mvn -Dmaven.repo.local="${localm2repo}" -U -s "${settingsfile}" -Dincludes='org.opendaylight*' -P"stagingrepodir,${mavenprofiles}" -B org.codehaus.mojo:versions-maven-plugin:2.2-autorelease-SNAPSHOT:use-latest-versions -l "${locallogsdir}/changeversion.log"
     # Commit the change done by use-latest-versions
     git commit -a -s -m "Updated to newer local release versions" && echo "Updated artifacts"
     
-    #${autoreleasebasedir}/localrelease --stagingrepodir "${stagingreleases}" --localrepodir "${localdeployrepo}" && echo "Release failed for ${repo}" || exit 1
+    ${autoreleasebasedir}/localrelease --stagingrepodir "${stagingreleases}" --localrepodir "${localdeployrepo}" --logsdir "${locallogsdir}" --profiles "${mavenprofiles}" && echo "Release failed for ${repo}" || exit 1
     
     # Now stage the released artifacts
     mvn -Dwagon.source="file://${localdeployrepo}" -Dwagon.target="file://${stagingreleases}" wagon:merge-maven-repos -l "${locallogsdir}/merge-maven-repos.log"

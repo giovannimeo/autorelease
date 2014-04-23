@@ -6,7 +6,7 @@
 # Very much needed for GIT repositories
 
 function usage {
-    echo "Usage: $0 [--ignoresnapshots] [--debug] [--localrepodir <local repo directory>] [--stagingrepodir <staging repo directory>]"
+    echo "Usage: $0 [--ignoresnapshots] [--debug] [--localrepodir <local repo directory>] [--stagingrepodir <staging repo directory>] [--profiles <profiles to enable>] [--logsdir <log directory>]"
     exit 1
 }
 
@@ -17,15 +17,18 @@ stagingdir=`readlink -f "${PWD}/.."`
 ignoresnapshots="false"
 debug=0
 unknown_option=0
-profiles="-Pintegrationtests"
+profiles="integrationtests"
 # By default use a localrepodir for deploy and local resolution that is in the current directory
 localrepodir="${basedir}/localrepodir"
 stagingrepodir="${stagingdir}/stagingrepodir"
+logsdir="${basedir}/logs"
 while true ; do
     case "$1" in
         --ignoresnapshots) ignoresnapshots="true"; shift;;
         --debug) debug=1; shift;;
         --localrepodir) shift; localrepodir="$1"; shift;;
+        --profiles) shift; profiles="$1"; shift;;
+        --logsdir) shift; logsdir="$1"; shift;;
         --stagingrepodir) shift; stagingrepodir="$1"; shift;;
 	-*) echo "Unknown option $1"; unknown_option=1; shift;;
 	*) break ;;
@@ -63,7 +66,7 @@ preparationtag="preparation-tag-${lockedversion}"
 
 # Checkout new branch and try to prepare for the release
 # with the expected version number
-git checkout -f "${basebranch}" -b "${preparationbranch}" && mvn -Dmaven.repo.remote="file:///${stagingrepodir}" -Dreleaseplugin.version=2.5 -Dmaven.release.version=2.5 -B release:clean release:prepare -DpushChanges=false -Dtag="${preparationtag}" -DcompletionGoals="help:system" -DpreparationGoals="clean install" -DignoreSnapshots=${ignoresnapshots} "${profiles}" -Darguments="-Dmaven.repo.remote=file:///${stagingrepodir} ${profiles}" || exit 1
+git checkout -f "${basebranch}" -b "${preparationbranch}" && mvn -Dmaven.repo.remote="file:///${stagingrepodir}" -Dreleaseplugin.version=2.5 -Dmaven.release.version=2.5 -B release:clean release:prepare -DpushChanges=false -Dtag="${preparationtag}" -DcompletionGoals="help:system" -DpreparationGoals="clean install" -DignoreSnapshots=${ignoresnapshots} -P"${profiles}" -Darguments="-Dmaven.repo.remote=file:///${stagingrepodir} -P${profiles}" -l "${logsdir}/preparation-branch.log" || exit 1
 
 # Remove completedPhase so we can reuse the release.properties from scratch
 sed -i '/^completedPhase/d' release.properties
@@ -81,9 +84,9 @@ localreleasetag="localrelease-tag-${lockedversion}"
 
 # Now attempt to do a release prepare, this time the branch will be the one will be pushed as well
 # the tag that will be pushed
-git checkout -f "${basebranch}" -b "${localreleasebranch}" && mvn -Dmaven.repo.remote="file:///${stagingrepodir}" -Dreleaseplugin.version=2.5 -Dmaven.release.version=2.5 -B release:prepare -DpushChanges=false -Dtag="${localreleasetag}" -DcompletionGoals="help:system" -DpreparationGoals="clean install" -DignoreSnapshots=${ignoresnapshots} "${profiles}" -Darguments="-Dmaven.repo.remote=file:///${stagingrepodir} ${profiles}" || exit 1
+git checkout -f "${basebranch}" -b "${localreleasebranch}" && mvn -Dmaven.repo.remote="file:///${stagingrepodir}" -Dreleaseplugin.version=2.5 -Dmaven.release.version=2.5 -B release:prepare -DpushChanges=false -Dtag="${localreleasetag}" -DcompletionGoals="help:system" -DpreparationGoals="clean install" -DignoreSnapshots=${ignoresnapshots} "-P${profiles}" -Darguments="-Dmaven.repo.remote=file:///${stagingrepodir} -P${profiles}" -l "${logsdir}/localrelease-branch.log" || exit 1
 
 # Now try to do a local deployment to make sure we can deploy the files appropriately
-git checkout -f "${localreleasetag}" && mvn -DaltDeploymentRepository="localdir::default::file:///${localrepodir}" clean deploy || exit 1
+git checkout -f "${localreleasetag}" && mvn -DaltDeploymentRepository="localdir::default::file:///${localrepodir}" clean deploy -l "${logsdir}/localdeploy.log" || exit 1
 
 exit 0
