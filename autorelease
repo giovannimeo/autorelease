@@ -16,21 +16,56 @@ branchforrelease='origin/master'
 logdir="${autoreleasebasedir}/logs"
 mavenprofiles="integrationtests"
 
-# Cleanup
-rm -rf "${repogitbase}"
-mkdir -p "${repogitbase}"
-rm -rf "${stagingreleases}"
-mkdir -p "${stagingreleases}"
-rm -rf "${settingsfile}"
-rm -rf "${logdir}"
-mkdir -p "${logdir}"
+function usage {
+    echo "Usage: $0 [--restart_from <target>]"
+    exit 1
+}
 
-# Now lets create localreleasesettings.xml
-cp "${settingstemplatefile}" "${settingsfile}"
-sed -i "s!#STAGINGREPODIR#!${stagingreleases}!g" "${settingsfile}"
-sed -i "s!#TOOLSREPODIR#!${toolsrepodir}!g" "${settingsfile}"
+unknown_option=0
+restart_from=""
+while true ; do
+    case "$1" in
+        --restart_from) shift; restart_from="$1"; shift;;
+	-*) echo "Unknown option $1"; unknown_option=1; shift;;
+	*) break ;;
+    esac
+done
+
+if [ "${unknown_option}" == "1" ]; then
+    usage
+    exit 1
+fi
+
+skip_initial=0
+if [ "${restart_from}" == "" ]; then
+    # Cleanup
+    rm -rf "${repogitbase}"
+    mkdir -p "${repogitbase}"
+    rm -rf "${stagingreleases}"
+    mkdir -p "${stagingreleases}"
+    rm -rf "${settingsfile}"
+    rm -rf "${logdir}"
+    mkdir -p "${logdir}"
+
+    # Now lets create localreleasesettings.xml
+    cp "${settingstemplatefile}" "${settingsfile}"
+    sed -i "s!#STAGINGREPODIR#!${stagingreleases}!g" "${settingsfile}"
+    sed -i "s!#TOOLSREPODIR#!${toolsrepodir}!g" "${settingsfile}"
+else 
+    skip_initial=1
+fi
 
 for repo in $repositoryList; do
+    if [ "${skip_initial}" == 1 ]; then
+        if [ "${restart_from}" == "${repo}" ]; then
+            # We run into the repo we last did so from next we will
+            # restart
+            skip_initial=0
+        fi
+        echo "Skipping ${repo}"
+        continue
+    fi
+
     cd "${repogitbase}"
     git clone "${odlreporoot}/${repo}" "${repo}"|| exit 1
     cd "${repogitbase}/${repo}"
