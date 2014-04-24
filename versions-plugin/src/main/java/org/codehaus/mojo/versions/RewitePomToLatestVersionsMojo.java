@@ -41,7 +41,7 @@ import java.util.List;
 
 /**
  * Replaces any version with the latest version.
- * 
+ *
  * @author Stephen Connolly
  * @goal rewritepom-to-latest-versions
  * @requiresProject true
@@ -75,6 +75,12 @@ public class RewitePomToLatestVersionsMojo
      */
     protected Boolean allowIncrementalUpdates;
 
+    enum UpdateType {
+        UpdateDependency,
+        UpdatePlugin,
+        UpdateParent,
+    };
+
     // ------------------------------ METHODS --------------------------
 
     /**
@@ -91,21 +97,28 @@ public class RewitePomToLatestVersionsMojo
     protected void update(ModifiedPomXMLEventReader pom) throws MojoExecutionException, MojoFailureException,
             XMLStreamException {
         try {
-            if (getProject().getDependencyManagement() != null && isProcessingDependencyManagement()) {
+            if (getProject().getDependencyManagement() != null) {
+                getLog().info("Search and rewrite updates in DependencyManagement");
                 useLatestVersions(pom, getProject().getDependencyManagement()
                         .getDependencies());
             }
-            if (isProcessingDependencies()) {
-                useLatestVersions(pom, getProject().getDependencies());
-            }
-            getLog().info("Run over pluginArtifacts");
+            getLog().info("Search and rewrite updates in Dependencies");
+            useLatestVersions(pom, getProject().getDependencies());
+
+            getLog().info("Search and rewrite updates in BuildPlugins");
             // Update also the plugins Artifacts
             useLatestVersionsFromPlugins(pom, getProject().getBuildPlugins());
 
-            getLog().info("Run over pluginManagement Artifacts");
-            // Update alse the pluginManagement Artifacts
+            getLog().info("Search and rewrite updates in PluginManagement");
+            // Update also the pluginManagement Artifacts
             useLatestVersionsFromPlugins(pom, getProject().getPluginManagement()
                     .getPlugins());
+
+            int segment = determineUnchangedSegment(allowMajorUpdates, allowMinorUpdates, allowIncrementalUpdates);
+            getLog().info("Search and rewrite updates in Parent POM");
+            // Update also the Parent POM
+            useLatestVersionsForArtifact(pom, getProject().getParentArtifact(), segment, UpdateType.UpdateParent);
+
         } catch (ArtifactMetadataRetrievalException e) {
             throw new MojoExecutionException(e.getMessage(), e);
         }
@@ -125,11 +138,12 @@ public class RewitePomToLatestVersionsMojo
             }
 
             Artifact artifact = this.toArtifact(dep);
-            useLatestVersionsForArtifact(pom, artifact, segment);
+            useLatestVersionsForArtifact(pom, artifact, segment, UpdateType.UpdateDependency);
         }
     }
 
-    private void useLatestVersionsForArtifact(ModifiedPomXMLEventReader pom, Artifact artifact, int segment)
+    private void useLatestVersionsForArtifact(ModifiedPomXMLEventReader pom, Artifact artifact, int segment,
+            UpdateType type)
             throws XMLStreamException, MojoExecutionException, ArtifactMetadataRetrievalException {
         String version = artifact.getBaseVersion();
         if (!isIncluded(artifact)) {
@@ -144,9 +158,24 @@ public class RewitePomToLatestVersionsMojo
         if (newer.length > 0) {
             String newVersion = newer[newer.length - 1].toString();
             getLog().info("NewerVersion is:" + newVersion);
-            if (PomHelper.setDependencyVersion(pom, artifact.getGroupId(), artifact.getArtifactId(), version,
-                    newVersion)) {
-                getLog().info("Updated " + artifact + " to version " + newVersion);
+            switch (type) {
+            case UpdateDependency:
+                if (PomHelper.setDependencyVersion(pom, artifact.getGroupId(), artifact.getArtifactId(), version,
+                        newVersion)) {
+                    getLog().info("Updated DEPENDENCY for artifact:" + artifact + " to version " + newVersion);
+                }
+                break;
+            case UpdatePlugin:
+                if (PomHelper.setPluginVersion(pom, artifact.getGroupId(), artifact.getArtifactId(), version,
+                        newVersion)) {
+                    getLog().info("Updated PLUGIN for artifact:" + artifact + " to version " + newVersion);
+                }
+                break;
+            case UpdateParent:
+                if (PomHelper.setProjectParentVersion(pom, newVersion)) {
+                    getLog().info("Updated PARENT artifact:" + artifact + " to version " + newVersion);
+                }
+                break;
             }
         }
     }
@@ -170,7 +199,7 @@ public class RewitePomToLatestVersionsMojo
                 }
                 if (pluginArtifact != null) {
                     getLog().info("Try to update pluginArtifact " + pluginArtifact);
-                    useLatestVersionsForArtifact(pom, pluginArtifact, segment);
+                    useLatestVersionsForArtifact(pom, pluginArtifact, segment, UpdateType.UpdatePlugin);
                 }
             }
 
@@ -187,7 +216,7 @@ public class RewitePomToLatestVersionsMojo
                     }
 
                     Artifact artifact = this.toArtifact(dep);
-                    useLatestVersionsForArtifact(pom, artifact, segment);
+                    useLatestVersionsForArtifact(pom, artifact, segment, UpdateType.UpdateDependency);
                 }
             }
         }

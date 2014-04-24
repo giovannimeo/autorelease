@@ -539,17 +539,14 @@ public class PomHelper
         boolean haveArtifactId = false;
         boolean haveOldVersion = false;
 
-        final Pattern matchScopeRegex =
-                Pattern.compile("/project" + "(/profiles/profile)?" + "("
-                        + "(/build(/pluginManagement)?/plugins/plugin)" + "|"
-                        + "(((/dependencyManagement)|(/build(/pluginManagement)?/plugins/plugin))?"
-                        + "/dependencies/dependency)" + ")");
+        final Pattern matchScopeRegex = Pattern.compile( "/project" + "(/profiles/profile)?" +
+                                                             "((/dependencyManagement)|(/build(/pluginManagement)?/plugins/plugin))?"
+                                                             + "/dependencies/dependency" );
 
-        final Pattern matchTargetRegex =
-                Pattern.compile("/project" + "(/profiles/profile)?" + "("
-                        + "(/build(/pluginManagement)?/plugins/plugin)" + "|"
-                        + "(((/dependencyManagement)|(/build(/pluginManagement)?/plugins/plugin))?"
-                        + "/dependencies/dependency)" + ")" + "((/groupId)|(/artifactId)|(/version))");
+        final Pattern matchTargetRegex = Pattern.compile( "/project" + "(/profiles/profile)?" +
+                                                              "((/dependencyManagement)|(/build(/pluginManagement)?/plugins/plugin))?"
+                                                              + "/dependencies/dependency" +
+                                                              "((/groupId)|(/artifactId)|(/version))" );
 
         pom.rewind();
 
@@ -564,14 +561,6 @@ public class PomHelper
 
                 if ( matchScopeRegex.matcher( path ).matches() )
                 {
-                    // Maybe we had it all sort it out so lets execute before we
-                    // start a new scope
-                    if (inMatchScope && pom.hasMark(0) && pom.hasMark(1) && haveGroupId && haveArtifactId
-                            && haveOldVersion) {
-                        pom.replaceBetween(0, 1, newVersion);
-                        madeReplacement = true;
-                    }
-
                     // we're in a new match scope
                     // reset any previous partial matches
                     inMatchScope = true;
@@ -621,7 +610,7 @@ public class PomHelper
                     }
                     if (compressedPomVersion.indexOf("${") >= 0) {
                         // The version is a property, we should in theory expand
-                        // it, but for now lets just expand it
+                        // it, but for now lets just replace it
                         haveOldVersion = true;
                     }
                 }
@@ -824,7 +813,6 @@ public class PomHelper
 
                 if ( matchScopeRegex.matcher( path ).matches() )
                 {
-
                     // we're in a new match scope
                     // reset any previous partial matches
                     inMatchScope = true;
@@ -869,6 +857,12 @@ public class PomHelper
                         // fall back to string comparison
                         haveOldVersion = oldVersion.equals( pom.getBetween( 0, 1 ).trim() );
                     }
+                    if (pom.getBetween( 0, 1 ).trim().indexOf("${") >= 0) {
+                        // The version is a property, we should in theory expand
+                        // it, but for now lets just replace it
+                        haveOldVersion = true;
+                    }
+
                 }
                 else if ( matchScopeRegex.matcher( path ).matches() )
                 {
