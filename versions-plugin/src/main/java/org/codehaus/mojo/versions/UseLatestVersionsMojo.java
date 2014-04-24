@@ -20,9 +20,13 @@ package org.codehaus.mojo.versions;
  */
 
 import org.apache.maven.artifact.Artifact;
+import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.artifact.metadata.ArtifactMetadataRetrievalException;
 import org.apache.maven.artifact.versioning.ArtifactVersion;
+import org.apache.maven.artifact.versioning.InvalidVersionSpecificationException;
+import org.apache.maven.artifact.versioning.VersionRange;
 import org.apache.maven.model.Dependency;
+import org.apache.maven.model.Plugin;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.codehaus.mojo.versions.api.ArtifactVersions;
@@ -30,8 +34,10 @@ import org.codehaus.mojo.versions.api.PomHelper;
 import org.codehaus.mojo.versions.rewriting.ModifiedPomXMLEventReader;
 
 import javax.xml.stream.XMLStreamException;
+
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * Replaces any version with the latest version.
@@ -81,62 +87,109 @@ public class UseLatestVersionsMojo
      *          when things go wrong with XML streaming
      * @see AbstractVersionsUpdaterMojo#update(org.codehaus.mojo.versions.rewriting.ModifiedPomXMLEventReader)
      */
-    protected void update( ModifiedPomXMLEventReader pom )
-        throws MojoExecutionException, MojoFailureException, XMLStreamException
-    {
-        try
-        {
-            if ( getProject().getDependencyManagement() != null && isProcessingDependencyManagement() )
-            {
-                useLatestVersions( pom, getProject().getDependencyManagement().getDependencies() );
+    @Override
+    protected void update(ModifiedPomXMLEventReader pom) throws MojoExecutionException, MojoFailureException,
+            XMLStreamException {
+        try {
+            if (getProject().getDependencyManagement() != null && isProcessingDependencyManagement()) {
+                useLatestVersions(pom, getProject().getDependencyManagement()
+                        .getDependencies());
             }
-            if ( isProcessingDependencies() )
-            {
-                useLatestVersions( pom, getProject().getDependencies() );
+            if (isProcessingDependencies()) {
+                useLatestVersions(pom, getProject().getDependencies());
             }
-        }
-        catch ( ArtifactMetadataRetrievalException e )
-        {
-            throw new MojoExecutionException( e.getMessage(), e );
+            getLog().info("Run over pluginArtifacts");
+            // Update also the plugins Artifacts
+            useLatestVersionsFromPlugins(pom, getProject().getBuildPlugins());
+
+            getLog().info("Run over pluginManagement Artifacts");
+            // Update alse the pluginManagement Artifacts
+            useLatestVersionsFromPlugins(pom, getProject().getPluginManagement()
+                    .getPlugins());
+        } catch (ArtifactMetadataRetrievalException e) {
+            throw new MojoExecutionException(e.getMessage(), e);
         }
     }
 
-    private void useLatestVersions( ModifiedPomXMLEventReader pom, Collection dependencies )
-        throws XMLStreamException, MojoExecutionException, ArtifactMetadataRetrievalException
-    {
-        int segment = determineUnchangedSegment( allowMajorUpdates, allowMinorUpdates, allowIncrementalUpdates );
-        Iterator i = dependencies.iterator();
+    private void useLatestVersions(ModifiedPomXMLEventReader pom, Collection<?> dependencies)
+            throws XMLStreamException, MojoExecutionException, ArtifactMetadataRetrievalException {
+        int segment = determineUnchangedSegment(allowMajorUpdates, allowMinorUpdates, allowIncrementalUpdates);
+        Iterator<?> i = dependencies.iterator();
 
-        while ( i.hasNext() )
-        {
+        while (i.hasNext()) {
             Dependency dep = (Dependency) i.next();
 
-            if ( isExcludeReactor() && isProducedByReactor( dep ) )
-            {
-                getLog().info( "Ignoring reactor dependency: " + toString( dep ) );
+            if (isExcludeReactor() && isProducedByReactor(dep)) {
+                getLog().debug("Ignoring reactor dependency: " + toString(dep));
                 continue;
             }
 
-            String version = dep.getVersion();
-            Artifact artifact = this.toArtifact( dep );
-            if ( !isIncluded( artifact ) )
-            {
-                continue;
+            Artifact artifact = this.toArtifact(dep);
+            useLatestVersionsForArtifact(pom, artifact, segment);
+        }
+    }
+
+    private void useLatestVersionsForArtifact(ModifiedPomXMLEventReader pom, Artifact artifact, int segment)
+            throws XMLStreamException, MojoExecutionException, ArtifactMetadataRetrievalException {
+        String version = artifact.getBaseVersion();
+        if (!isIncluded(artifact)) {
+            getLog().debug("Artifact:" + artifact + " is skipped");
+            return;
+        }
+
+        getLog().debug("Looking for newer versions of " + artifact);
+        ArtifactVersions versions = getHelper().lookupArtifactVersions(artifact, false);
+        ArtifactVersion[] newer = versions.getNewerVersions(version, segment, Boolean.TRUE.equals(allowSnapshots));
+        getLog().debug("Found #new versions:" + newer.length);
+        if (newer.length > 0) {
+            String newVersion = newer[newer.length - 1].toString();
+            getLog().info("NewerVersion is:" + newVersion);
+            if (PomHelper.setDependencyVersion(pom, artifact.getGroupId(), artifact.getArtifactId(), version,
+                    newVersion)) {
+                getLog().info("Updated " + artifact + " to version " + newVersion);
+            }
+        }
+    }
+
+    private void useLatestVersionsFromPlugins(ModifiedPomXMLEventReader pom, Collection<?> plugins)
+            throws XMLStreamException, MojoExecutionException, ArtifactMetadataRetrievalException {
+        int segment = determineUnchangedSegment(allowMajorUpdates, allowMinorUpdates, allowIncrementalUpdates);
+        Iterator<?> i = plugins.iterator();
+
+        while (i.hasNext()) {
+            Plugin plugin = (Plugin) i.next();
+
+            if ((plugin.getGroupId() != null) && (plugin.getArtifactId()) != null && (plugin.getVersion() != null)) {
+                Artifact pluginArtifact = null;
+                try {
+                    pluginArtifact =
+                            new DefaultArtifact(plugin.getGroupId(), plugin.getArtifactId(),
+                                    VersionRange.createFromVersionSpec(plugin.getVersion()), "", "", "", null);
+                } catch (InvalidVersionSpecificationException e) {
+                    pluginArtifact = null;
+                }
+                if (pluginArtifact != null) {
+                    getLog().info("Try to update pluginArtifact " + pluginArtifact);
+                    useLatestVersionsForArtifact(pom, pluginArtifact, segment);
+                }
             }
 
-            getLog().debug( "Looking for newer versions of " + toString( dep ) );
-            ArtifactVersions versions = getHelper().lookupArtifactVersions( artifact, false );
-            ArtifactVersion[] newer =
-                versions.getNewerVersions( version, segment, Boolean.TRUE.equals( allowSnapshots ) );
-            if ( newer.length > 0 )
-            {
-                String newVersion = newer[newer.length - 1].toString();
-                if ( PomHelper.setDependencyVersion( pom, dep.getGroupId(), dep.getArtifactId(), version, newVersion ) )
-                {
-                    getLog().info( "Updated " + toString( dep ) + " to version " + newVersion );
+            List<Dependency> dependencies = plugin.getDependencies();
+            if (dependencies != null) {
+                Iterator<Dependency> j = dependencies.iterator();
+
+                while (j.hasNext()) {
+                    Dependency dep = (Dependency) j.next();
+
+                    if (isExcludeReactor() && isProducedByReactor(dep)) {
+                        getLog().debug("Ignoring reactor dependency: " + toString(dep));
+                        continue;
+                    }
+
+                    Artifact artifact = this.toArtifact(dep);
+                    useLatestVersionsForArtifact(pom, artifact, segment);
                 }
             }
         }
     }
-
 }
