@@ -14,7 +14,7 @@ settingstemplatefile="${autoreleasebasedir}/localreleasesettings.xml.tmpl"
 settingsfile="${autoreleasebasedir}/localreleasesettings.xml"
 branchforrelease='origin/master'
 logdir="${autoreleasebasedir}/logs"
-mavenprofiles="integrationtests,stagingrepodir"
+mavenprofiles="integrationtests"
 
 # Cleanup
 rm -rf "${repogitbase}"
