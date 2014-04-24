@@ -36,6 +36,9 @@ if [ "${unknown_option}" == "1" ]; then
     exit 1
 fi
 
+# Make sure maven doesn't run out of memory
+export MAVEN_OPTS="-Xmx2048m -XX:MaxPermSize=512m"
+
 skip_initial=0
 if [ "${restart_from}" == "" ]; then
     # Cleanup
