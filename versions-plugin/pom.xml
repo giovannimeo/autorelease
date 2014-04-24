@@ -9,7 +9,7 @@
 
   <groupId>org.codehaus.mojo</groupId>
   <artifactId>versions-maven-plugin</artifactId>
-  <version>2.1</version>
+  <version>2.2-autorelease-SNAPSHOT</version>
   <packaging>maven-plugin</packaging>
 
   <name>Versions Maven Plugin</name>
@@ -446,6 +446,18 @@
   </reporting>
 
   <profiles>
+    <profile>
+      <id>IDE</id>
+      <activation>
+        <property>
+          <name>m2e.version</name>
+        </property>
+      </activation>
+      <build>
+        <!-- Put the IDE's build output in a folder other than target, so that IDE builds don't interact with Maven builds -->
+        <directory>target-ide</directory>
+      </build>
+    </profile>
     <profile>
       <!-- run integration tests
           to use this profile:
