@@ -5,20 +5,20 @@
   <version>2.2-autorelease-SNAPSHOT</version>
   <versioning>
     <snapshot>
-      <timestamp>20140424.095623</timestamp>
+      <timestamp>20140425.004307</timestamp>
       <buildNumber>1</buildNumber>
     </snapshot>
-    <lastUpdated>20140424095623</lastUpdated>
+    <lastUpdated>20140425004307</lastUpdated>
     <snapshotVersions>
       <snapshotVersion>
         <extension>jar</extension>
-        <value>2.2-autorelease-20140424.095623-1</value>
-        <updated>20140424095623</updated>
+        <value>2.2-autorelease-20140425.004307-1</value>
+        <updated>20140425004307</updated>
       </snapshotVersion>
       <snapshotVersion>
         <extension>pom</extension>
-        <value>2.2-autorelease-20140424.095623-1</value>
-        <updated>20140424095623</updated>
+        <value>2.2-autorelease-20140425.004307-1</value>
+        <updated>20140425004307</updated>
       </snapshotVersion>
     </snapshotVersions>
   </versioning>

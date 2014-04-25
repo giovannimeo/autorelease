@@ -78,7 +78,7 @@ for repo in $repositoryList; do
     mkdir -p "${locallogsdir}"
     git checkout ${branchforrelease} -b baseforrelease
     # Update the version to the latest ones in the repo
-    mvn -Dmaven.repo.local="${localm2repo}" -U -s "${settingsfile}" -Dincludes='org.opendaylight*' -P"${mavenprofiles}" -B org.codehaus.mojo:versions-maven-plugin:2.2-autorelease-SNAPSHOT:use-latest-versions -l "${locallogsdir}/changeversion.log"
+    mvn -Dmaven.repo.local="${localm2repo}" -U -s "${settingsfile}" -Dincludes='org.opendaylight*' -P"${mavenprofiles}" -B org.codehaus.mojo:versions-maven-plugin:2.2-autorelease-SNAPSHOT:rewritepom-to-latest-versions -l "${locallogsdir}/changeversion.log"
     # Commit the change done by use-latest-versions
     git commit -a -s -m "Updated to newer local release versions" && echo "Updated artifacts"
     
