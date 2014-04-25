@@ -71,7 +71,7 @@ preparationtag="preparation-tag-${lockedversion}"
 
 # Checkout new branch and try to prepare for the release
 # with the expected version number
-git checkout -f "${basebranch}" -b "${preparationbranch}" && mvn -Dmaven.repo.local="${localm2repo}" -Dorg.ops4j.pax.url.mvn.localRepository="${localm2repo}" -s "${settingsfile}" -Dreleaseplugin.version=2.5 -Dmaven.release.version=2.5 -B release:clean release:prepare -DpushChanges=false -Dtag="${preparationtag}" -DcompletionGoals="help:system" -DpreparationGoals="clean install" -DignoreSnapshots=${ignoresnapshots} -P"${profiles}" -Darguments="-Dmaven.repo.local=\"${localm2repo}\" -Dorg.ops4j.pax.url.mvn.localRepository=\"${localm2repo}\" -s \"${settingsfile}\" -P${profiles}" -l "${logsdir}/preparation-branch.log" || exit 1
+git checkout -f "${basebranch}" -b "${preparationbranch}" && mvn -Dmaven.repo.local="${localm2repo}" -Dorg.ops4j.pax.url.mvn.localRepository="${localm2repo}" -s "${settingsfile}" -Dreleaseplugin.version=2.5 -Dmaven.release.version=2.5 -B org.apache.maven.plugins:maven-release-plugin:2.5:clean org.apache.maven.plugins:maven-release-plugin:2.5:prepare -DpushChanges=false -Dtag="${preparationtag}" -DcompletionGoals="help:system" -DpreparationGoals="clean install" -DignoreSnapshots=${ignoresnapshots} -P"${profiles}" -Darguments="-Dmaven.repo.local=\"${localm2repo}\" -Dorg.ops4j.pax.url.mvn.localRepository=\"${localm2repo}\" -s \"${settingsfile}\" -P${profiles}" -l "${logsdir}/preparation-branch.log" || exit 1
 
 # Remove completedPhase so we can reuse the release.properties from scratch
 sed -i '/^completedPhase/d' release.properties
@@ -89,7 +89,7 @@ localreleasetag="localrelease-tag-${lockedversion}"
 
 # Now attempt to do a release prepare, this time the branch will be the one will be pushed as well
 # the tag that will be pushed
-git checkout -f "${basebranch}" -b "${localreleasebranch}" && mvn -Dmaven.repo.local="${localm2repo}" -Dorg.ops4j.pax.url.mvn.localRepository="${localm2repo}" -s "${settingsfile}" -Dreleaseplugin.version=2.5 -Dmaven.release.version=2.5 -B release:prepare -DpushChanges=false -Dtag="${localreleasetag}" -DcompletionGoals="help:system" -DpreparationGoals="clean install" -DignoreSnapshots=${ignoresnapshots} "-P${profiles}" -Darguments="-Dmaven.repo.local=\"${localm2repo}\" -Dorg.ops4j.pax.url.mvn.localRepository=\"${localm2repo}\" -s \"${settingsfile}\" -P${profiles}" -l "${logsdir}/localrelease-branch.log" || exit 1
+git checkout -f "${basebranch}" -b "${localreleasebranch}" && mvn -Dmaven.repo.local="${localm2repo}" -Dorg.ops4j.pax.url.mvn.localRepository="${localm2repo}" -s "${settingsfile}" -Dreleaseplugin.version=2.5 -Dmaven.release.version=2.5 -B org.apache.maven.plugins:maven-release-plugin:2.5:prepare -DpushChanges=false -Dtag="${localreleasetag}" -DcompletionGoals="help:system" -DpreparationGoals="clean install" -DignoreSnapshots=${ignoresnapshots} "-P${profiles}" -Darguments="-Dmaven.repo.local=\"${localm2repo}\" -Dorg.ops4j.pax.url.mvn.localRepository=\"${localm2repo}\" -s \"${settingsfile}\" -P${profiles}" -l "${logsdir}/localrelease-branch.log" || exit 1
 
 # Now try to do a local deployment to make sure we can deploy the files appropriately
 git checkout -f "${localreleasetag}" && mvn -Dmaven.repo.local="${localm2repo}" -DaltDeploymentRepository="localdir::default::file:///${localrepodir}" -s "${settingsfile}" clean deploy -l "${logsdir}/localdeploy.log" || exit 1
