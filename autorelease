@@ -15,9 +15,11 @@ settingsfile="${autoreleasebasedir}/localreleasesettings.xml"
 branchforrelease='origin/master'
 logdir="${autoreleasebasedir}/logs"
 mavenprofiles="integrationtests"
+# Run only on one repository useful for incremental tests
+onlyone=0
 
 function usage {
-    echo "Usage: $0 [--restart_from <target>]"
+    echo "Usage: $0 [--restart_from <target>] [--repositoryList <space separated repository list>] [--odlreporoot <url of ODL repos or mirror of it>] [--onlyone]"
     exit 1
 }
 
@@ -26,6 +28,9 @@ restart_from=""
 while true ; do
     case "$1" in
         --restart_from) shift; restart_from="$1"; shift;;
+        --repositoryList) shift; repositoryList="$1"; shift;;
+        --odlreporoot) shift; odlreporoot="$1"; shift;;
+        --onlyone) onlyone=1; shift;;
 	-*) echo "Unknown option $1"; unknown_option=1; shift;;
 	*) break ;;
     esac
@@ -58,8 +63,9 @@ else
     skip_initial=1
 fi
 
+firstrun=1
 for repo in $repositoryList; do
-    if [ "${skip_initial}" == 1 ]; then
+    if [ "${skip_initial}" == "1" ]; then
         if [ "${restart_from}" == "${repo}" ]; then
             # We run into the repo we last did so from next we will
             # restart
@@ -67,6 +73,16 @@ for repo in $repositoryList; do
         fi
         echo "Skipping ${repo}"
         continue
+    fi
+
+    # In case of only one run exit after first run
+    if [ "${onlyone}" == "1" ]; then
+        if [ "${firstrun}" == "0" ]; then echo "done one run so now exiting"; exit 0; fi
+    fi
+
+    # Toggle first run after first execution
+    if [ "${firstrun}" == "1" ]; then
+        firstrun=0
     fi
 
     cd "${repogitbase}"
