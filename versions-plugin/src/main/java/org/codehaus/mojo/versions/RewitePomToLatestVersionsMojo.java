@@ -114,10 +114,12 @@ public class RewitePomToLatestVersionsMojo
             useLatestVersionsFromPlugins(pom, getProject().getPluginManagement()
                     .getPlugins());
 
-            int segment = determineUnchangedSegment(allowMajorUpdates, allowMinorUpdates, allowIncrementalUpdates);
-            getLog().info("Search and rewrite updates in Parent POM");
-            // Update also the Parent POM
-            useLatestVersionsForArtifact(pom, getProject().getParentArtifact(), segment, UpdateType.UpdateParent);
+            if (getProject().getParentArtifact() != null) {
+                int segment = determineUnchangedSegment(allowMajorUpdates, allowMinorUpdates, allowIncrementalUpdates);
+                getLog().info("Search and rewrite updates in Parent POM");
+                // Update also the Parent POM
+                useLatestVersionsForArtifact(pom, getProject().getParentArtifact(), segment, UpdateType.UpdateParent);
+            }
 
         } catch (ArtifactMetadataRetrievalException e) {
             throw new MojoExecutionException(e.getMessage(), e);
