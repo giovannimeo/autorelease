@@ -72,8 +72,11 @@ for repo in $repositoryList; do
             # restart
             skip_initial=0
         fi
-        echo "Skipping ${repo}"
-        continue
+        # If still skiping the repo then lets do it
+        if [ "${skip_initial}" == "1" ]; then
+            echo "Skipping ${repo}"
+            continue
+        fi
     fi
 
     # In case of only one run exit after first run
