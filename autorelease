@@ -9,6 +9,7 @@ gitpushroot=""
 repositoryList="yangtools.git controller.git ovsdb.git openflowjava.git openflowplugin.git bgpcep.git affinity.git"
 repogitbase="${autoreleasebasedir}/gits"
 stagingreleases="${autoreleasebasedir}/stagingreleases"
+patchesdir="${autoreleasebasedir}/patches"
 toolsrepodir="${autoreleasebasedir}/toolsrepo"
 settingstemplatefile="${autoreleasebasedir}/localreleasesettings.xml.tmpl"
 settingsfile="${autoreleasebasedir}/localreleasesettings.xml"
@@ -93,6 +94,13 @@ for repo in $repositoryList; do
     locallogsdir="${logdir}/${repo}"
     mkdir -p "${locallogsdir}"
     git checkout ${branchforrelease} -b baseforrelease
+    # Now check if exist a patch file for this repo in that case apply
+    # them to the baseforrelease branch because it means they are
+    # still to go out on the master 
+    if [ -f "${patchesdir}/${repo}" ]; then
+        echo "Applying patches ${patchesdir}/${repo}"
+        git am "${patchesdir}/${repo}" || exit 1
+    fi
     # Update the version to the latest ones in the repo
     mvn -Dmaven.repo.local="${localm2repo}" -U -s "${settingsfile}" -Dincludes='org.opendaylight*' -P"${mavenprofiles}" -B org.codehaus.mojo:versions-maven-plugin:2.2-autorelease-SNAPSHOT:rewritepom-to-latest-versions -l "${locallogsdir}/changeversion.log"
     # Commit the change done by use-latest-versions
