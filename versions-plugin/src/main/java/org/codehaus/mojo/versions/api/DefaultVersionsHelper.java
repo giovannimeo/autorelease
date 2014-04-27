@@ -71,6 +71,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -219,13 +220,41 @@ public class DefaultVersionsHelper
         return log;
     }
 
+    private List<ArtifactRepository> filterRepositories(List<ArtifactRepository> inputRepos) {
+        String repoFilter = System.getProperty("versions.repoFilter");
+
+        // There is no filter so return the input one
+        if (repoFilter == null) {
+            getLog().debug("repoFilter is not defined so unfilter repos");
+            return inputRepos;
+        }
+        getLog().debug("repoFilter is:" + repoFilter);
+        // In case of a filter and the list of input Repos is non-null lets do
+        // filtering
+        if (inputRepos != null) {
+            List<ArtifactRepository> outputRepos = new ArrayList<ArtifactRepository>();
+            for (ArtifactRepository repo : inputRepos) {
+                getLog().debug("Analize repo:" + repo.getId());
+                Set<String> reposAllowed = new HashSet<String>(Arrays.asList(repoFilter.split(",")));
+                if (reposAllowed.contains(repo.getId())) {
+                    getLog().debug("Added to allowed");
+                    outputRepos.add(repo);
+                }
+            }
+            return outputRepos;
+        }
+
+        return inputRepos;
+    }
+
     /**
      * {@inheritDoc}
      */
     public ArtifactVersions lookupArtifactVersions( Artifact artifact, boolean usePluginRepositories )
         throws ArtifactMetadataRetrievalException
     {
-        List remoteRepositories = usePluginRepositories ? remotePluginRepositories : remoteArtifactRepositories;
+        List remoteRepositoriesOrig = usePluginRepositories ? remotePluginRepositories : remoteArtifactRepositories;
+        List remoteRepositories = filterRepositories(remoteRepositoriesOrig);
         final List<ArtifactVersion> versions = artifactMetadataSource.retrieveAvailableVersions( artifact, localRepository,
                                                                                                  remoteRepositories );
         final List<IgnoreVersion> ignoredVersions = getIgnoredVersions( artifact );
@@ -235,7 +264,7 @@ public class DefaultVersionsHelper
             {
                 getLog().debug( "Found ignored versions: " + showIgnoredVersions( ignoredVersions ) );
             }
-            
+
             final Iterator<ArtifactVersion> i = versions.iterator();
             while ( i.hasNext() )
             {
@@ -283,7 +312,7 @@ public class DefaultVersionsHelper
     private List<IgnoreVersion> getIgnoredVersions( Artifact artifact )
     {
         final List<IgnoreVersion> ret = new ArrayList<IgnoreVersion>();
-        
+
         for ( final IgnoreVersion ignoreVersion : ruleSet.getIgnoreVersions() )
         {
             if ( !TYPE_EXACT.equals( ignoreVersion.getType() )
@@ -297,7 +326,7 @@ public class DefaultVersionsHelper
                 ret.add( ignoreVersion );
             }
         }
-        
+
         final Rule rule = getBestFitRule( artifact.getGroupId(), artifact.getArtifactId() );
 
         if ( rule != null )
@@ -316,7 +345,7 @@ public class DefaultVersionsHelper
                 }
             }
         }
-        
+
         return ret;
     }
 
@@ -345,7 +374,9 @@ public class DefaultVersionsHelper
     public void resolveArtifact( Artifact artifact, boolean usePluginRepositories )
         throws ArtifactResolutionException, ArtifactNotFoundException
     {
-        List remoteRepositories = usePluginRepositories ? remotePluginRepositories : remoteArtifactRepositories;
+        List remoteRepositoriesOrig = usePluginRepositories ? remotePluginRepositories : remoteArtifactRepositories;
+        List remoteRepositories = filterRepositories(remoteRepositoriesOrig);
+
         artifactResolver.resolve( artifact, remoteRepositories, localRepository );
     }
 
@@ -366,7 +397,7 @@ public class DefaultVersionsHelper
         final String comparisonMethod = rule == null ? ruleSet.getComparisonMethod() : rule.getComparisonMethod();
         return VersionComparators.getVersionComparator( comparisonMethod );
     }
-        
+
     /**
      * Find the rule, if any, which best fits the artifact details given.
      *
