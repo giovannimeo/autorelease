@@ -1,0 +1,42 @@
+From 0eacc5d73fbc91bab1a0a78bd7f28d35cb8b7c11 Mon Sep 17 00:00:00 2001
+From: Giovanni Meo <gmeo@cisco.com>
+Date: Sun, 27 Apr 2014 02:09:40 +0200
+Subject: [PATCH] Skip from the surefire execution plugins that can step over
+ guava feet
+
+Seems like the com.google.common.collect.* package has been reused in
+several jars like:
+
+- guava
+- google-collection
+- pax-url-aether
+
+Now the netconf-it in the classpath of contains via transitive the 3
+of them but only guava is usable by yang-bindings used by the netconf
+client test. The presence of the 3 cause unreliability on the test
+pass based on who comes first in the classpath of surefire. The fix is
+to make sure surefire ignore the other two libraries except guava.
+
+Signed-off-by: Giovanni Meo <gmeo@cisco.com>
+---
+ opendaylight/netconf/netconf-it/pom.xml | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/opendaylight/netconf/netconf-it/pom.xml b/opendaylight/netconf/netconf-it/pom.xml
+index b0a9ed9..3b16e28 100644
+--- a/opendaylight/netconf/netconf-it/pom.xml
++++ b/opendaylight/netconf/netconf-it/pom.xml
+@@ -153,6 +153,10 @@
+           <forkCount>1</forkCount>
+           <reuseForks>false</reuseForks>
+           <perCoreThreadCount>false</perCoreThreadCount>
++          <classpathDependencyExcludes>
++            <classpathDependencyExcludes>com.google.collections:google-collections</classpathDependencyExcludes>
++            <classpathDependencyExcludes>org.ops4j.pax.url:pax-url-aether</classpathDependencyExcludes>
++          </classpathDependencyExcludes>
+         </configuration>
+         <executions>
+           <execution>
+-- 
+1.8.5.2
+
