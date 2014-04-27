@@ -2,4 +2,8 @@ gits
 stagingreleases
 localreleasesettings.xml
 logs
+toolsrepo
 *~
+target
+target-ide
+
