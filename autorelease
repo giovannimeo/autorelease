@@ -65,7 +65,11 @@ else
 fi
 
 firstrun=1
-for repo in $repositoryList; do
+for repouri in $repositoryList; do
+    repo=`basename ${repouri}`
+    if [ "${repo}" == "${repouri}" ]; then
+        repouri="${odlreporoot}/${repo}"
+    fi
     if [ "${skip_initial}" == "1" ]; then
         if [ "${restart_from}" == "${repo}" ]; then
             # We run into the repo we last did so from next we will
@@ -90,7 +94,7 @@ for repo in $repositoryList; do
     fi
 
     cd "${repogitbase}"
-    git clone "${odlreporoot}/${repo}" "${repo}"|| exit 1
+    git clone "${repouri}" "${repo}"|| exit 1
     cd "${repogitbase}/${repo}"
     localm2repo="${repogitbase}/${repo}/.m2repo"
     localdeployrepo="${repogitbase}/${repo}/deployrepo"
