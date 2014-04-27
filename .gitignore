@@ -6,4 +6,7 @@ toolsrepo
 *~
 target
 target-ide
+.classpath
+.settings
+.project
 
