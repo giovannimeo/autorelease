@@ -1,0 +1,85 @@
+#!/bin/bash
+
+autoreleasefullpath=`readlink -f $0`
+autoreleasebasedir=`dirname ${autoreleasefullpath}`
+# GIT root for the ODL repositories
+odlreporoot="https://git.opendaylight.org/gerrit/"
+# GIT root for the mirrors if any to push the tags
+gitpushroot=""
+repositoryList=""
+repogitbase="${autoreleasebasedir}/gits"
+stagingreleases="${autoreleasebasedir}/stagingreleases"
+settingsfile="${autoreleasebasedir}/localreleasesettings.xml"
+branchforrelease='origin/master'
+logdir="${autoreleasebasedir}/logs"
+mavenprofiles="integrationtests"
+mavenDeployTargetURL=""
+mavenDeployTargetID=""
+
+function usage {
+    echo "Usage: $0 --repositoryList <space separated repository list> --mavenDeployTargetURL <maven repo URL> --mavenDeployTargetID <maven repo ID>"
+    exit 1
+}
+
+unknown_option=0
+restart_from=""
+while true ; do
+    case "$1" in
+        --repositoryList) shift; repositoryList="$1"; shift;;
+        --mavenDeployTargetURL) shift; mavenDeployTargetURL="$1"; shift;;
+        --mavenDeployTargetID) shift; mavenDeployTargetID="$1"; shift;;
+	-*) echo "Unknown option $1"; unknown_option=1; shift;;
+	*) break ;;
+    esac
+done
+
+if [ "${unknown_option}" == "1" ]; then
+    usage
+    exit 1
+fi
+
+if [ "${repositoryList}" == "" ]; then
+    echo "repository list empty this is mandatory"
+    usage
+    exit 1
+fi
+
+if [ "${mavenDeployTargetURL}" == "" ]; then
+    echo "deploy target url is empty, this is mandatory"
+    usage
+    exit 1
+fi
+
+if [ "${mavenDeployTargetID}" == "" ]; then
+    echo "deploy target ID is empty, this is mandatory"
+    usage
+    exit 1
+fi
+
+# Make sure maven doesn't run out of memory
+export MAVEN_OPTS="-Xmx2048m -XX:MaxPermSize=512m"
+
+for repouri in $repositoryList; do
+    repo=`basename ${repouri}`
+    if [ "${repo}" == "${repouri}" ]; then
+        echo "Please provide a fully qualified uri for the repo to push now is:${repouri}"
+        continue
+    fi
+
+    if [ -d "${repogitbase}/${repo}" ]; then
+        cd "${repogitbase}/${repo}"
+        if [ -f "release.properties" ]; then
+            localm2repo="${repogitbase}/${repo}/.m2repo"
+            locallogsdir="${logdir}/${repo}"
+            localdeployrepo="${repogitbase}/${repo}/deployrepo"
+            mkdir -p "${locallogsdir}"
+            localtag=`grep "scm.tag=" release.properties | sed 's/scm.tag=//'`
+            git fetch "${repouri}"
+            git push "${repouri}" ${localtag}:${localtag}
+            mvn -s "${settingsfile}" -Dmaven.repo.local="${localm2repo}" -Dwagon.source="file://${localdeployrepo}" -Dwagon.target="${mavenDeployTargetURL}" -Dwagon.targetId="${mavenDeployTargetID}" wagon:merge-maven-repos -l "${locallogsdir}/push-merge-maven-repos.log"
+        fi
+    fi
+done
+
+# On success exit with result 0
+exit 0
