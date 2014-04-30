@@ -1,3 +1,104 @@
-- autorelease is the driver script that does the whole job
-- localrelease is the workhorse on a single repo
+OVERVIEW
+========
+"autorelease" is a set of scripts and enhancements to the
+versions-maven-plugin (to be upstreamed if accepted) that enable to
+streamline the release process of ODL, and to perform the process
+before any GIT TAG is actually pushed to the central repo as well and
+nexus artifacts is not deployed till the whole process is done.
 
+SCRIPTS EXPLANATION
+================
+- "autorelease" is the driver script that goes over the list of
+ repositories and perform a localrelease on each of them. The script
+ first all runs the versions-maven-plugin to make sure all the
+ artifacts belonging to "org.opendaylight*" are updated to the latest
+ released version, that means for example that after yangtool is build
+ and released locally, controller project will transform all the
+ "-SNAPSHOT" dependencies from yangtools to be the just released
+ yangtools artifacts, so the release process can work happily.
+
+- "localrelease" is in charge of performing the release of a single
+  project, it assumes that there are no -SNAPSHOT dependencies to
+  external projects, this should be guaranteed by the fact the
+  "autorelease" runs the project based on the order of dependency and
+  that the "versions-maven-plugin" correctly detect the SNAPSHOT
+  dependencies and changes them to the just released versions.
+
+- "pushrelease" is the script supposed to be run at the end of the
+  release process so the GIT tags for the release just performed are
+  pushed out and the released artifacts that has been deployed local
+  are actually upstreamed to the central nexus
+
+BASIC WORKFLOW
+==============
+A sample workflow goes like this:
+
+1) Release a list of projects, if the repo names are not fully
+qualified they are assumed to be relative to:
+"https://git.opendaylight.org/gerrit/"
+
+./autorelease --repositoryList "yangtools.git controller.git openflowjava.git"
+
+2) If the process in step #1 completes fine (will take a while) you
+can push out the release using:
+
+./pushrelease --repositoryList "ssh://git.opendaylight.org:29418//controller.git ssh://git.opendaylight.org:29418//yangtools.git ssh://git.opendaylight.org:29418//openflowjava.git" --mavenDeployTargetURL "https://nexus.opendaylight.org/content/repositories/opendaylight.release/" --mavenDeployTargetID "opendaylight.release"
+
+This last step assume that you can deploy tags to the GIT repositories
+as well be able to upload to nexus.
+
+THEORY OF OPERATION
+===================
+The release performed by auto-release wants to be not intrusive into
+the day-to-day job of the GIT repositories, so let assume you start
+from a situation where you have the repositories like:
+
+  [master]
+  -----------------------------------------------------------------> (yangtools)
+                                                                   t
+  [master]
+  -----------------------------------------------------------------> (controller)
+                                                                   t
+  [master]
+  -----------------------------------------------------------------> (ovsdb)
+                                                                   t
+
+ ...... ETC.
+
+  at the time and date when the release is performed the branch
+  situation will look like this:
+
+
+  [master]
+  -------------------+---------------------------------------------> (yangtools)
+                     |                                             t
+                     \---[localrelease-branch-v20140430040302_57eda02]
+
+  [master]
+  -------------------+---------------------------------------------> (controller)
+                     |                                             t
+                     \---[localrelease-branch-v20140430042302_23dfe02]
+
+  [master]
+  -------------------+---------------------------------------------> (ovsdb)
+                     |                                             t
+                     \---[localrelease-branch-v20140430051302_ff6aa02]
+
+The release script would have just branched out from master and would
+have applied only the necessary patch to remove the -SNAPSHOT
+dependencies as well to generate pom for the released artifacts
+(without -SNAPSHOT at the end). The process would have not changed
+master branch at all. Clearly given there are no changes to master
+subsequent releases in order to ensure that don't create conflicting
+release numbers, and release numbers that are incremental, will get a
+build qualifier appended which is in the form of:
+      v{year}{month}{day}{hour}{min}_{git short commit ID for HEAD}
+
+
+CAVEATS
+=======
+1) The script at the moment release out of master, but can be enhanced
+to work on any stable branch
+2) The modified maven-versions-plugin currently if need to replace a
+variable in a pom, replace it with the expanded value and doesn't
+update the property, this is a bug and need to be fixed
