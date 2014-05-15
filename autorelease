@@ -13,7 +13,7 @@ patchesdir="${autoreleasebasedir}/patches"
 toolsrepodir="${autoreleasebasedir}/toolsrepo"
 settingstemplatefile="${autoreleasebasedir}/localreleasesettings.xml.tmpl"
 settingsfile="${autoreleasebasedir}/localreleasesettings.xml"
-branchforrelease='origin/master'
+branchforrelease='master'
 logdir="${autoreleasebasedir}/logs"
 mavenprofiles="integrationtests"
 # Run only on one repository useful for incremental tests
@@ -32,6 +32,7 @@ while true ; do
         --repositoryList) shift; repositoryList="$1"; shift;;
         --odlreporoot) shift; odlreporoot="$1"; shift;;
         --onlyone) onlyone=1; shift;;
+        --branch) shift; branchforrelease="$1"; shift;
 	-*) echo "Unknown option $1"; unknown_option=1; shift;;
 	*) break ;;
     esac
@@ -104,13 +105,13 @@ for repouri in $repositoryList; do
     localdeployrepo="${repogitbase}/${repo}/deployrepo"
     locallogsdir="${logdir}/${repo}"
     mkdir -p "${locallogsdir}"
-    git checkout ${branchforrelease} -b baseforrelease
+    git checkout "origin/${branchforrelease}" -b baseforrelease
     # Now check if exist a patch file for this repo in that case apply
     # them to the baseforrelease branch because it means they are
     # still to go out on the master 
-    if [ -f "${patchesdir}/${repo}" ]; then
-        echo "Applying patches ${patchesdir}/${repo}"
-        git am "${patchesdir}/${repo}" || exit 1
+    if [ -f "${patchesdir}/${branchforrelease}/${repo}" ]; then
+        echo "Applying patches ${patchesdir}/${branchforrelease}/${repo}"
+        git am "${patchesdir}/${branchforrelease}/${repo}" || exit 1
     fi
     # Update the version to the latest ones in the repo
     mvn -Dmaven.repo.local="${localm2repo}" -U -s "${settingsfile}" -Dversions.repoFilter="stagingrepodir" -Dincludes='org.opendaylight*' -P"${mavenprofiles}" -B org.codehaus.mojo:versions-maven-plugin:2.2-autorelease-SNAPSHOT:rewritepom-to-latest-versions -l "${locallogsdir}/changeversion.log"
