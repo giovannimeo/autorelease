@@ -48,14 +48,6 @@ fi
 echo "LOCALRepo Directory is: ${localrepodir}"
 echo "STAGINGRepo Directory is: ${stagingrepodir}"
 
-gitshorthead=`git log --pretty="%h" -n 1`
-if [ "${gitshorthead}" != "" ]; then gitshorthead="_${gitshorthead}"; fi
-lockedversion="`date '+v%Y%m%d%H%M%S'`${gitshorthead}"
-
-if [ ${debug} == 1 ]; then
-    echo "VERSION:${lockedversion}"
-fi
-
 # Make sure to escape /\: so if you want to get \: you have to write \\\:
 #localscm="scm\\\:git\\\:ssh\\\:\/\/xnc-build.cisco.com\/gerrit\\\:29418\/odp-openflowjava-mirror"
 
@@ -63,7 +55,24 @@ basebranch="baseforrelease"
 git show-ref --verify --quiet "refs/heads/${basebranch}"
 branchdoesntexist=$?
 if [ ${branchdoesntexist} != 0 ]; then
-    git update-ref "refs/heads/${basebranch}" origin/master
+    echo "Noone setup the baseforrelease branch"
+    exit 1
+fi
+
+basebranch_initial="baseforrelease_initial"
+git show-ref --verify --quiet "refs/heads/${basebranch_initial}"
+branchdoesntexist=$?
+if [ ${branchdoesntexist} != 0 ]; then
+    echo "Noone setup the baseforrelease_initial branch"
+    exit 1
+fi
+
+gitshorthead=`git log ${basebranch_initial} --pretty="%h" -n 1`
+if [ "${gitshorthead}" != "" ]; then gitshorthead="_${gitshorthead}"; fi
+lockedversion="`date '+v%Y%m%d%H%M%S'`${gitshorthead}"
+
+if [ ${debug} == 1 ]; then
+    echo "VERSION:${lockedversion}"
 fi
 
 preparationbranch="preparation-branch-${lockedversion}"

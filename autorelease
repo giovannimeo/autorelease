@@ -105,6 +105,7 @@ for repouri in $repositoryList; do
     localdeployrepo="${repogitbase}/${repo}/deployrepo"
     locallogsdir="${logdir}/${repo}"
     mkdir -p "${locallogsdir}"
+    git checkout "origin/${branchforrelease}" -b baseforrelease_initial
     git checkout "origin/${branchforrelease}" -b baseforrelease
     # Now check if exist a patch file for this repo in that case apply
     # them to the baseforrelease branch because it means they are
