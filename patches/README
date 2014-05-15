@@ -1,0 +1,11 @@
+This directory will contains patches as generated from:
+
+git format-patch --stdout <version ranges> > <projectid>.git
+
+so if we want to apply patches to controller.git before to attempt the
+release we shall create the file "controller.git". This is useful
+during test of the autorelease process for applying patches that may
+block the release process otherwise.
+
+
+ 
