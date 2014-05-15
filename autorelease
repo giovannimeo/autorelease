@@ -32,7 +32,7 @@ while true ; do
         --repositoryList) shift; repositoryList="$1"; shift;;
         --odlreporoot) shift; odlreporoot="$1"; shift;;
         --onlyone) onlyone=1; shift;;
-        --branch) shift; branchforrelease="$1"; shift;
+        --branch) shift; branchforrelease="$1"; shift;;
 	-*) echo "Unknown option $1"; unknown_option=1; shift;;
 	*) break ;;
     esac
