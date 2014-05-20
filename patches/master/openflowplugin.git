@@ -1,0 +1,75 @@
+From 74971c5a2b793460c3a505c4799fb73ec83a0f20 Mon Sep 17 00:00:00 2001
+From: Giovanni Meo <gmeo@cisco.com>
+Date: Tue, 20 May 2014 16:45:00 +0200
+Subject: [PATCH] Update nagasena bundles
+
+Signed-off-by: Giovanni Meo <gmeo@cisco.com>
+---
+ openflowplugin-it/pom.xml                                           | 4 ++--
+ .../openflowplugin/openflow/md/it/OFPaxOptionsAssistant.java        | 2 +-
+ pom.xml                                                             | 6 +++---
+ 3 files changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/openflowplugin-it/pom.xml b/openflowplugin-it/pom.xml
+index 30f90b7..30b2f0b 100644
+--- a/openflowplugin-it/pom.xml
++++ b/openflowplugin-it/pom.xml
+@@ -202,12 +202,12 @@
+         </dependency>
+         
+         <dependency>
+-          <groupId>org.opendaylight.controller.thirdparty</groupId>
++          <groupId>org.openexi</groupId>
+           <artifactId>nagasena</artifactId>
+           <scope>test</scope>
+         </dependency>
+         <dependency>
+-          <groupId>org.opendaylight.controller.thirdparty</groupId>
++          <groupId>org.openexi</groupId>
+           <artifactId>nagasena-rta</artifactId>
+           <scope>test</scope>
+         </dependency>
+diff --git a/openflowplugin-it/src/test/java/org/opendaylight/openflowplugin/openflow/md/it/OFPaxOptionsAssistant.java b/openflowplugin-it/src/test/java/org/opendaylight/openflowplugin/openflow/md/it/OFPaxOptionsAssistant.java
+index 960e234..7fe1f09 100644
+--- a/openflowplugin-it/src/test/java/org/opendaylight/openflowplugin/openflow/md/it/OFPaxOptionsAssistant.java
++++ b/openflowplugin-it/src/test/java/org/opendaylight/openflowplugin/openflow/md/it/OFPaxOptionsAssistant.java
+@@ -76,7 +76,7 @@ public abstract class OFPaxOptionsAssistant {
+                 ofLibraryBundles(),
+                 mavenBundle(CONTROLLER_MODEL, "model-flow-statistics").versionAsInProject(),
+                 mavenBundle(OFPLUGIN, "openflowplugin").versionAsInProject(),
+-                mavenBundle("org.opendaylight.controller.thirdparty", "nagasena").versionAsInProject()
++                mavenBundle("org.openexi", "nagasena").versionAsInProject()
+                 );
+     }
+ 
+diff --git a/pom.xml b/pom.xml
+index abebcba..6e7c2b9 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -52,7 +52,7 @@
+       <jmxGeneratorPath>src/main/yang-gen-config</jmxGeneratorPath>
+       <salGeneratorPath>src/main/yang-gen-sal</salGeneratorPath>
+       <maven.bundle.version>2.4.0</maven.bundle.version>
+-      <exi.nagasena.version>0000.0002.0038.0-SNAPSHOT</exi.nagasena.version>
++      <exi.nagasena.version>0000.0002.0038.0</exi.nagasena.version>
+     </properties>
+ 
+     <dependencyManagement>
+@@ -224,12 +224,12 @@
+ 
+         <!-- thirdparty -->
+         <dependency>
+-          <groupId>org.opendaylight.controller.thirdparty</groupId>
++          <groupId>org.openexi</groupId>
+           <artifactId>nagasena</artifactId>
+           <version>${exi.nagasena.version}</version>
+         </dependency>
+         <dependency>
+-          <groupId>org.opendaylight.controller.thirdparty</groupId>
++          <groupId>org.openexi</groupId>
+           <artifactId>nagasena-rta</artifactId>
+           <version>${exi.nagasena.version}</version>
+         </dependency>
+-- 
+1.8.5.2
+
