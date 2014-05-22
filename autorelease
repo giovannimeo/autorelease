@@ -16,11 +16,12 @@ settingsfile="${autoreleasebasedir}/localreleasesettings.xml"
 branchforrelease='master'
 logdir="${autoreleasebasedir}/logs"
 mavenprofiles="integrationtests"
+clean_repo=0
 # Run only on one repository useful for incremental tests
 onlyone=0
 
 function usage {
-    echo "Usage: $0 [--restart_from <target>] [--repositoryList <space separated repository list>] [--odlreporoot <url of ODL repos or mirror of it>] [--onlyone]"
+    echo "Usage: $0 [--restart_from <target>] [--repositoryList <space separated repository list>] [--odlreporoot <url of ODL repos or mirror of it>] [--onlyone] [--clean_repo]"
     exit 1
 }
 
@@ -28,6 +29,7 @@ unknown_option=0
 restart_from=""
 while true ; do
     case "$1" in
+        --clean_repo) clean_repo=1; shift;;
         --restart_from) shift; restart_from="$1"; shift;;
         --repositoryList) shift; repositoryList="$1"; shift;;
         --odlreporoot) shift; odlreporoot="$1"; shift;;
@@ -99,6 +101,9 @@ for repouri in $repositoryList; do
     fi
 
     cd "${repogitbase}"
+    if [ "${clean_repo}" == "1" ]; then
+        rm -rf "${repogitbase}/${repo}"
+    fi
     git clone "${repouri}" "${repo}"|| exit 1
     cd "${repogitbase}/${repo}"
     localm2repo="${repogitbase}/${repo}/.m2repo"
