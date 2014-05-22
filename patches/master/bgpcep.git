@@ -1,0 +1,25 @@
+From 05a8fe165454e5967773b6a66ececace99f14aaa Mon Sep 17 00:00:00 2001
+From: Giovanni Meo <gmeo@cisco.com>
+Date: Thu, 22 May 2014 18:59:41 +0200
+Subject: [PATCH] jni-cfg should be part only of the jni profile
+
+Signed-off-by: Giovanni Meo <gmeo@cisco.com>
+---
+ tcp-md5/pom.xml | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/tcp-md5/pom.xml b/tcp-md5/pom.xml
+index 8b8fda4..44f3c38 100644
+--- a/tcp-md5/pom.xml
++++ b/tcp-md5/pom.xml
+@@ -102,7 +102,6 @@
+             <modules>
+                 <module>api</module>
+                 <module>api-cfg</module>
+-                <module>jni-cfg</module>
+                 <module>netty</module>
+                 <module>netty-cfg</module>
+                 <module>nio</module>
+-- 
+1.8.5.2
+
