@@ -6,7 +6,7 @@ autoreleasebasedir=`dirname ${autoreleasefullpath}`
 odlreporoot="https://git.opendaylight.org/gerrit/"
 # GIT root for the mirrors if any to push the tags
 gitpushroot=""
-repositoryList="yangtools.git controller.git ovsdb.git openflowjava.git openflowplugin.git bgpcep.git affinity.git"
+repositoryList="yangtools.git controller.git openflowjava.git openflowplugin.git ovsdb.git affinity.git opendove.git snmp4sdn.git bgpcep.git integration.git"
 repogitbase="${autoreleasebasedir}/gits"
 stagingreleases="${autoreleasebasedir}/stagingreleases"
 patchesdir="${autoreleasebasedir}/patches"
