@@ -17,11 +17,12 @@ branchforrelease='master'
 logdir="${autoreleasebasedir}/logs"
 mavenprofiles="integrationtests"
 clean_repo=0
+declare -A override_branch
 # Run only on one repository useful for incremental tests
 onlyone=0
 
 function usage {
-    echo "Usage: $0 [--restart_from <target>] [--repositoryList <space separated repository list>] [--odlreporoot <url of ODL repos or mirror of it>] [--onlyone] [--clean_repo]"
+    echo "Usage: $0 [--restart_from <target>] [--repositoryList <space separated repository list>] [--odlreporoot <url of ODL repos or mirror of it>] [--onlyone] [--clean_repo] [--override_branch <repo to override> <branch to use>]"
     exit 1
 }
 
@@ -29,6 +30,7 @@ unknown_option=0
 restart_from=""
 while true ; do
     case "$1" in
+        --override_branch) shift; override_branch["$1"]="$2"; shift; shift;;
         --clean_repo) clean_repo=1; shift;;
         --restart_from) shift; restart_from="$1"; shift;;
         --repositoryList) shift; repositoryList="$1"; shift;;
@@ -110,14 +112,21 @@ for repouri in $repositoryList; do
     localdeployrepo="${repogitbase}/${repo}/deployrepo"
     locallogsdir="${logdir}/${repo}"
     mkdir -p "${locallogsdir}"
-    git checkout "origin/${branchforrelease}" -b baseforrelease_initial
-    git checkout "origin/${branchforrelease}" -b baseforrelease
+    branchforrepo="${branchforrelease}"
+    if [ "${override_branch[${repo}]}" == "" ]; then
+        branchforrepo="${branchforrelease}"
+    else
+        branchforrepo="${override_branch[${repo}]}"
+    fi
+    echo "Using as base branch ${branchforrepo}"
+    git checkout "origin/${branchforrepo}" -b baseforrelease_initial
+    git checkout "origin/${branchforrepo}" -b baseforrelease
     # Now check if exist a patch file for this repo in that case apply
     # them to the baseforrelease branch because it means they are
     # still to go out on the master 
-    if [ -f "${patchesdir}/${branchforrelease}/${repo}" ]; then
-        echo "Applying patches ${patchesdir}/${branchforrelease}/${repo}"
-        git am "${patchesdir}/${branchforrelease}/${repo}" || exit 1
+    if [ -f "${patchesdir}/${branchforrepo}/${repo}" ]; then
+        echo "Applying patches ${patchesdir}/${branchforrepo}/${repo}"
+        git am "${patchesdir}/${branchforrepo}/${repo}" || exit 1
     fi
     # Update the version to the latest ones in the repo
     mvn -Dmaven.repo.local="${localm2repo}" -U -s "${settingsfile}" -Dversions.repoFilter="stagingrepodir" -Dincludes='org.opendaylight*' -P"${mavenprofiles}" -B org.codehaus.mojo:versions-maven-plugin:2.2-autorelease-SNAPSHOT:rewritepom-to-latest-versions -l "${locallogsdir}/changeversion.log"
