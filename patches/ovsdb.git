@@ -1,0 +1,277 @@
+From bda26286b69e870b9e244cfff2b087fde51b628f Mon Sep 17 00:00:00 2001
+From: Giovanni Meo <gmeo@cisco.com>
+Date: Thu, 22 May 2014 15:38:54 +0200
+Subject: [PATCH] ovsdb has a dependency on artifacts from integration project,
+ that shall be removed
+
+- ovsdb has a dependency on artifact from integration project, while
+integration project depends on ovsdb. This is a circular dependency
+for the release process because we cannot release OVSDB without
+releasing INTEGRATION and viceversa. To break the circular dependency
+i'm proposing to build the ovsdb distribution starting from the
+controller one adding the few deltas needed. Yes this cause some
+duplication but i couldn't find a better way to break it. Suggestions
+are more then welcome!
+
+Change-Id: Ifed07caddce549a96a7f6eb92d6c977f2f938d5c
+Signed-off-by: Giovanni Meo <gmeo@cisco.com>
+---
+ distribution/opendaylight/pom.xml                  | 52 +++++++++++++++++++---
+ distribution/opendaylight/src/assemble/bin.xml     | 43 +++++++++++-------
+ .../src/assemble/resources/run.base.sh             | 50 +++++++++++++++++++++
+ .../opendaylight/src/assemble/resources/run.sh     | 45 +++++++++++++++++++
+ 4 files changed, 167 insertions(+), 23 deletions(-)
+ create mode 100755 distribution/opendaylight/src/assemble/resources/run.base.sh
+ create mode 100755 distribution/opendaylight/src/assemble/resources/run.sh
+
+diff --git a/distribution/opendaylight/pom.xml b/distribution/opendaylight/pom.xml
+index 74f819f..04dd37a 100755
+--- a/distribution/opendaylight/pom.xml
++++ b/distribution/opendaylight/pom.xml
+@@ -17,6 +17,34 @@ see https://git.opendaylight.org/gerrit/#/c/390/
+   <name>ovsdb Distribution</name>
+   <dependencies>
+     <dependency>
++      <groupId>org.opendaylight.openflowjava</groupId>
++      <artifactId>openflow-protocol-api</artifactId>
++      <version>0.5-SNAPSHOT</version>
++    </dependency>
++
++    <!-- openflowjava -->
++    <dependency>
++      <groupId>org.opendaylight.openflowjava</groupId>
++      <artifactId>openflow-protocol-impl</artifactId>
++      <version>0.5-SNAPSHOT</version>
++    </dependency>
++    <dependency>
++      <groupId>org.opendaylight.openflowjava</groupId>
++      <artifactId>openflow-protocol-spi</artifactId>
++      <version>0.5-SNAPSHOT</version>
++    </dependency>
++    <!-- openflowplugin -->
++    <dependency>
++      <groupId>org.opendaylight.openflowplugin</groupId>
++      <artifactId>openflowplugin</artifactId>
++      <version>0.0.3-SNAPSHOT</version>
++    </dependency>
++    <dependency>
++      <groupId>org.opendaylight.openflowplugin</groupId>
++      <artifactId>openflowplugin-controller-config</artifactId>
++      <version>0.0.3-SNAPSHOT</version>
++    </dependency>
++    <dependency>
+       <groupId>org.opendaylight.ovsdb</groupId>
+       <artifactId>ovsdb</artifactId>
+       <version>0.5.1-SNAPSHOT</version>
+@@ -32,8 +60,8 @@ see https://git.opendaylight.org/gerrit/#/c/390/
+       <version>0.5.1-SNAPSHOT</version>
+     </dependency>
+     <dependency>
+-      <groupId>org.opendaylight.integration</groupId>
+-      <artifactId>distributions-virtualization</artifactId>
++      <groupId>org.opendaylight.controller</groupId>
++      <artifactId>distribution.opendaylight</artifactId>
+       <version>0.1.2-SNAPSHOT</version>
+       <classifier>osgipackage</classifier>
+       <type>zip</type>
+@@ -82,8 +110,22 @@ see https://git.opendaylight.org/gerrit/#/c/390/
+             <phase>generate-resources</phase>
+             <configuration>
+               <outputDirectory>${project.build.directory}/generated-resources</outputDirectory>
+-              <includeArtifactIds>distributions-virtualization</includeArtifactIds>
+-              <includeGroupIds>org.opendaylight.integration</includeGroupIds>
++              <includeArtifactIds>distribution.opendaylight</includeArtifactIds>
++              <includeGroupIds>org.opendaylight.controller</includeGroupIds>
++              <excludeTransitive>true</excludeTransitive>
++              <ignorePermissions>false</ignorePermissions>
++            </configuration>
++          </execution>
++          <execution>
++            <id>unpack-provided-configs</id>
++            <goals>
++              <goal>unpack-dependencies</goal>
++            </goals>
++            <phase>generate-resources</phase>
++            <configuration>
++              <outputDirectory>${project.build.directory}/provided-configs</outputDirectory>
++              <includeArtifactIds>openflowplugin-controller-config</includeArtifactIds>
++              <includes>**\/*.xml</includes>
+               <excludeTransitive>true</excludeTransitive>
+               <ignorePermissions>false</ignorePermissions>
+             </configuration>
+@@ -100,5 +142,3 @@ see https://git.opendaylight.org/gerrit/#/c/390/
+     <url>https://wiki.opendaylight.org/view/OVSDB_Integration:Main</url>
+   </scm>
+ </project>
+-
+-
+diff --git a/distribution/opendaylight/src/assemble/bin.xml b/distribution/opendaylight/src/assemble/bin.xml
+index 346df3c..fd9a8bc 100644
+--- a/distribution/opendaylight/src/assemble/bin.xml
++++ b/distribution/opendaylight/src/assemble/bin.xml
+@@ -14,29 +14,38 @@
+       <outputDirectory>/</outputDirectory>
+       <excludes>
+           <exclude>opendaylight/plugins/*ovsdb*</exclude>
++          <exclude>opendaylight/run.sh</exclude>
++      </excludes>
++    </fileSet>
++    <fileSet>
++      <directory>${project.build.directory}/provided-configs/initial</directory>
++      <outputDirectory>/opendaylight/configuration/initial.available</outputDirectory>
++      <excludes>
++        <exclude>**/META-INF/**</exclude>
+       </excludes>
+     </fileSet>
+   </fileSets>
++  <files>
++    <file>
++      <source>${project.build.directory}/generated-resources/opendaylight/run.sh</source>
++      <outputDirectory>/opendaylight/</outputDirectory>
++      <destName>run.internal.sh</destName>
++      <fileMode>0755</fileMode>
++    </file>
++    <file>
++      <source>${basedir}/src/assemble/resources/run.sh</source>
++      <outputDirectory>/opendaylight/</outputDirectory>
++      <fileMode>0755</fileMode>
++    </file>
++    <file>
++      <source>${basedir}/src/assemble/resources/run.base.sh</source>
++      <outputDirectory>/opendaylight/</outputDirectory>
++      <fileMode>0755</fileMode>
++    </file>
++  </files>
+   <dependencySets>
+     <dependencySet>
+       <outputDirectory>opendaylight/plugins</outputDirectory>
+-      <excludes>
+-        <exclude>equinoxSDK381:org.eclipse.osgi</exclude>
+-        <exclude>equinoxSDK381:org.eclipse.equinox.console</exclude>
+-        <exclude>equinoxSDK381:org.eclipse.equinox.launcher</exclude>
+-        <exclude>equinoxSDK381:org.eclipse.equinox.ds</exclude>
+-        <exclude>equinoxSDK381:org.eclipse.equinox.util</exclude>
+-        <exclude>equinoxSDK381:org.eclipse.osgi.services</exclude>
+-        <exclude>virgomirror:org.eclipse.jdt.core.compiler.batch</exclude>
+-        <exclude>org.apache.felix:org.apache.felix.fileinstall</exclude>
+-        <exclude>geminiweb:org.eclipse.virgo.kernel.equinox.extensions</exclude>
+-        <exclude>org.slf4j:slf4j-api</exclude>
+-        <exclude>ch.qos.logback:logback-core</exclude>
+-        <exclude>ch.qos.logback:logback-classic</exclude>
+-        <exclude>com.sun.jersey:jersey-core</exclude>
+-        <exclude>com.sun.jersey:jersey-json</exclude>
+-        <exclude>com.sun.jersey:jersey-server</exclude>
+-      </excludes>
+       <outputFileNameMapping>
+         ${artifact.groupId}.${artifact.artifactId}-${artifact.version}${dashClassifier?}.${artifact.extension}
+       </outputFileNameMapping>
+diff --git a/distribution/opendaylight/src/assemble/resources/run.base.sh b/distribution/opendaylight/src/assemble/resources/run.base.sh
+new file mode 100755
+index 0000000..f721ef8
+--- /dev/null
++++ b/distribution/opendaylight/src/assemble/resources/run.base.sh
+@@ -0,0 +1,50 @@
++#!/bin/bash
++
++# Use same path for run.internal.sh
++RUNSH_DIR=$(dirname $0)
++CONTROLLER_RUNSH=${RUNSH_DIR}/run.internal.sh
++
++OF_FILTER=
++
++# Be extra careful to pass on usage from run.internal.sh, but add our
++# usage as well in the standard way
++function usage {
++    $CONTROLLER_RUNSH -help | sed 's/\[-help\]/\[-help\] \[-of13\] \[-bundlefilter \<bundlefilter\> \]/' | sed "s;$CONTROLLER_RUNSH;$0;"
++    exit 1
++}
++
++OF13=0
++BUNDLEFILTER=
++while true ; do
++    (( i += 1 ))
++    case "${@:$i:1}" in
++        -of13) OF13=1 ;;
++        -bundlefilter) (( i += 1 )); BUNDLEFILTER="|${@:$i:1}";;
++        -help) usage ;;
++        "") break ;;
++    esac
++done
++
++# clean available optional configurations (links)
++find configuration/initial -type l -exec rm {} \;
++
++# OF Filter selection
++OF_FILTER="org.opendaylight.(openflowplugin|openflowjava)"
++if (( $OF13 != 0 )); then
++    OF_FILTER="org.opendaylight.controller.(thirdparty.org.openflow|protocol_plugins.openflow)"
++    while read ofConfig; do
++        ln -s ../initial.available/$(basename ${ofConfig}) configuration/initial/
++    done < <(find configuration/initial.available -name '*openflowplugin.xml')
++fi
++
++# Make sure we suck out our additional args so as to not confuse
++# run.internal.sh
++NEWARGS=`echo $@|sed 's/-of13//'|sed 's/-bundlefilter[ ]*[^ ]*//'`
++
++# Build the filter string
++FILTERBEGINING='^(?!'
++FILTERENDING=').*'
++FILTER=${FILTERBEGINING}${OF_FILTER}${BUNDLEFILTER}${FILTERENDING}
++
++# Run the command
++$CONTROLLER_RUNSH -Dfelix.fileinstall.filter="$FILTER" $NEWARGS
+diff --git a/distribution/opendaylight/src/assemble/resources/run.sh b/distribution/opendaylight/src/assemble/resources/run.sh
+new file mode 100755
+index 0000000..1b08fdf
+--- /dev/null
++++ b/distribution/opendaylight/src/assemble/resources/run.sh
+@@ -0,0 +1,45 @@
++#!/bin/bash
++
++# Use same path for run.base.sh
++RUNSH_DIR=$(dirname $0)
++RUN_BASE_SH=${RUNSH_DIR}/run.base.sh
++
++function usage {
++    echo -e "You must select one of the 3 supported network virtualization technologies:\n\tovsdb | opendove | vtn"
++    echo "Usage: $0 -virt {ovsdb | opendove | vtn | affinity} [advanced options]"
++    echo "Advanced options: $($RUN_BASE_SH -help | sed "s;Usage: $RUN_BASE_SH ;;")"
++    exit 1
++}
++
++virtIndex=0
++while true ; do
++    (( i += 1 ))
++    case "${@:$i:1}" in
++        -virt) virtIndex=$i ;;
++        "") break ;;
++    esac
++done
++
++# Virtualization edition select
++if [ ${virtIndex} -eq 0 ]; then
++    usage
++fi
++
++virt=${@:$virtIndex+1:1}
++if [ "${virt}" == "" ]; then
++    usage
++else
++    if [ "${virt}" == "ovsdb" ]; then
++        ODL_VIRT_FILTER="opendove|vtn"
++    elif [ "${virt}" == "opendove" ]; then
++        ODL_VIRT_FILTER="ovsdb|vtn"
++    elif [ "${virt}" == "vtn" ]; then
++        ODL_VIRT_FILTER="affinity|opendove|ovsdb.ovsdb.neutron|controller.(arphandler|samples)"
++    elif [ "${virt}" == "affinity" ]; then
++        ODL_VIRT_FILTER="vtn|opendove|controller.samples"
++    else
++        usage
++    fi
++fi
++
++$RUN_BASE_SH -bundlefilter "org.opendaylight.(${ODL_VIRT_FILTER})" "${@:1:$virtIndex-1}" "${@:virtIndex+2}"
+-- 
+1.8.5.2
+
