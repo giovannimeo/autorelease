@@ -140,7 +140,7 @@ for repouri in $repositoryList; do
     fi
     
     # Now stage the released artifacts
-    mvn -Dwagon.source="file://${localdeployrepo}" -Dwagon.target="file://${stagingreleases}" wagon:merge-maven-repos -l "${locallogsdir}/merge-maven-repos.log"
+    mvn -s "${settingsfile}" -Dwagon.source="file://${localdeployrepo}" -Dwagon.target="file://${stagingreleases}" wagon:merge-maven-repos -l "${locallogsdir}/merge-maven-repos.log"
 done
 
 # On success exit with result 0
