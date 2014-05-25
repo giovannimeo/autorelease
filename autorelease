@@ -15,7 +15,7 @@ settingstemplatefile="${autoreleasebasedir}/localreleasesettings.xml.tmpl"
 settingsfile="${autoreleasebasedir}/localreleasesettings.xml"
 branchforrelease='master'
 logdir="${autoreleasebasedir}/logs"
-mavenprofiles="integrationtests"
+mavenprofiles="integrationtests,jni"
 clean_repo=0
 declare -A override_branch
 # Run only on one repository useful for incremental tests
