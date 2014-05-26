@@ -25,6 +25,8 @@ stagingrepodir="${scriptdir}/stagingreleases"
 logsdir="${scriptdir}/logs"
 settingsfile="${scriptdir}/localreleasesettings.xml"
 localm2repo="${basedir}/.m2repo"
+version_date_prefix=`date '+v%Y%m%d%H%M%S'`
+gitbundlerepo=""
 while true ; do
     case "$1" in
         --localm2repo) shift; localm2repo="$1"; shift;;
@@ -35,6 +37,8 @@ while true ; do
         --profiles) shift; profiles="$1"; shift;;
         --logsdir) shift; logsdir="$1"; shift;;
         --stagingrepodir) shift; stagingrepodir="$1"; shift;;
+        --version_date_prefix) shift; version_date_prefix="$1"; shift;;
+        --gitbundlerepo) shift; gitbundlerepo="$1"; shift;;
 	-*) echo "Unknown option $1"; unknown_option=1; shift;;
 	*) break ;;
     esac
@@ -69,7 +73,12 @@ fi
 
 gitshorthead=`git log ${basebranch_initial} --pretty="%h" -n 1`
 if [ "${gitshorthead}" != "" ]; then gitshorthead="_${gitshorthead}"; fi
-lockedversion="`date '+v%Y%m%d%H%M%S'`${gitshorthead}"
+lockedversion="${version_date_prefix}${gitshorthead}"
+
+# Now save the repository in git bundle if a file is provided, till this point
+if [ ! "${gitbundlerepo}" == "" ]; then
+    git bundle create "${gitbundlerepo}" "${basebranch_initial}" "${basebranch}"
+fi
 
 if [ ${debug} == 1 ]; then
     echo "VERSION:${lockedversion}"
@@ -93,8 +102,13 @@ sed -i "s/\(^project\.rel\.[^=]*\)=\(.*\)/\1=\2-${lockedversion}/" release.prope
 #sed -i "s/\(^project\.scm\.[^=]*\.connection\)=\(.*\)/\1=${localscm}/" release.properties
 #sed -i "s/\(^scm\.url\)=\(.*\)/\1=${localscm}/" release.properties
 
-localreleasebranch="localrelease-branch-${lockedversion}"
-localreleasetag="localrelease-tag-${lockedversion}"
+# Now save the repository in git bundle if a file is provided till this point
+if [ ! "${gitbundlerepo}" == "" ]; then
+    git bundle create "${gitbundlerepo}" "${preparationtag}" "${basebranch_initial}" "${basebranch}" "${preparationbranch}"
+fi
+
+localreleasebranch="autorelease-branch-${lockedversion}"
+localreleasetag="autorelease-tag-${lockedversion}"
 
 # Now attempt to do a release prepare, this time the branch will be the one will be pushed as well
 # the tag that will be pushed
@@ -103,4 +117,10 @@ git checkout -f "${basebranch}" -b "${localreleasebranch}" && mvn -Dmaven.repo.l
 # Now try to do a local deployment to make sure we can deploy the files appropriately
 git checkout -f "${localreleasetag}" && mvn -Dmaven.repo.local="${localm2repo}" -Dorg.ops4j.pax.url.mvn.localRepository="${localm2repo}" -DaltDeploymentRepository="localdir::default::file:///${localrepodir}" -s "${settingsfile}" "-P${profiles}" clean javadoc:jar source:jar deploy -l "${logsdir}/localdeploy.log" || exit 1
 echo "DONE LOCALRELEASE last result is: $?"
+
+# Now save the repository in git bundle if a file is provided, for the successful build
+if [ ! "${gitbundlerepo}" == "" ]; then
+    git bundle create "${gitbundlerepo}" "${localreleasetag}" "${preparationtag}" "${basebranch_initial}" "${basebranch}" "${localreleasebranch}" "${preparationbranch}"
+fi
+
 exit 0
