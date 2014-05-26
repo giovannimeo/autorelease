@@ -72,17 +72,17 @@ from a situation where you have the repositories like:
   [master]
   -------------------+---------------------------------------------> (yangtools)
                      |                                             t
-                     \---[localrelease-branch-v20140430040302_57eda02]
+                     \---[autorelease-branch-v20140430040302_57eda02]
 
   [master]
   -------------------+---------------------------------------------> (controller)
                      |                                             t
-                     \---[localrelease-branch-v20140430042302_23dfe02]
+                     \---[autorelease-branch-v20140430042302_23dfe02]
 
   [master]
   -------------------+---------------------------------------------> (ovsdb)
                      |                                             t
-                     \---[localrelease-branch-v20140430051302_ff6aa02]
+                     \---[autorelease-branch-v20140430051302_ff6aa02]
 
 The release script would have just branched out from master and would
 have applied only the necessary patch to remove the -SNAPSHOT
