@@ -114,13 +114,13 @@ localreleasetag="autorelease-tag-${lockedversion}"
 # the tag that will be pushed
 git checkout -f "${basebranch}" -b "${localreleasebranch}" && mvn -Dmaven.repo.local="${localm2repo}" -Dorg.ops4j.pax.url.mvn.localRepository="${localm2repo}" -s "${settingsfile}" -Dreleaseplugin.version=2.5 -Dmaven.release.version=2.5 -B org.apache.maven.plugins:maven-release-plugin:2.5:prepare -DpushChanges=false -Dtag="${localreleasetag}" -DcompletionGoals="help:system" -DpreparationGoals="clean install" -DignoreSnapshots=${ignoresnapshots} "-P${profiles}" -Darguments="-Dmaven.repo.local=\"${localm2repo}\" -Dorg.ops4j.pax.url.mvn.localRepository=\"${localm2repo}\" -s \"${settingsfile}\" -P${profiles}" -l "${logsdir}/localrelease-branch.log" || exit 1
 
-# Now try to do a local deployment to make sure we can deploy the files appropriately
-git checkout -f "${localreleasetag}" && mvn -Dmaven.repo.local="${localm2repo}" -Dorg.ops4j.pax.url.mvn.localRepository="${localm2repo}" -DaltDeploymentRepository="localdir::default::file:///${localrepodir}" -s "${settingsfile}" "-P${profiles}" clean javadoc:jar source:jar deploy -l "${logsdir}/localdeploy.log" || exit 1
-echo "DONE LOCALRELEASE last result is: $?"
-
-# Now save the repository in git bundle if a file is provided, for the successful build
+# Now save the repository in git bundle if a file is provided, including the localrelease branch and tag
 if [ ! "${gitbundlerepo}" == "" ]; then
     git bundle create "${gitbundlerepo}" "${localreleasetag}" "${preparationtag}" "${basebranch_initial}" "${basebranch}" "${localreleasebranch}" "${preparationbranch}"
 fi
+
+# Now try to do a local deployment to make sure we can deploy the files appropriately
+git checkout -f "${localreleasetag}" && mvn -Dmaven.repo.local="${localm2repo}" -Dorg.ops4j.pax.url.mvn.localRepository="${localm2repo}" -DaltDeploymentRepository="localdir::default::file:///${localrepodir}" -s "${settingsfile}" "-P${profiles}" clean javadoc:jar source:jar deploy -l "${logsdir}/localdeploy.log" || exit 1
+echo "DONE LOCALRELEASE last result is: $?"
 
 exit 0
