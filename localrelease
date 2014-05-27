@@ -6,7 +6,7 @@
 # Very much needed for GIT repositories
 
 function usage {
-    echo "Usage: $0 [--ignoresnapshots] [--debug] [--localrepodir <local repo directory>] [--stagingrepodir <staging repo directory>] [--profiles <profiles to enable>] [--logsdir <log directory>]"
+    echo "Usage: $0 [--ignoresnapshots] [--debug] [--localrepodir <local repo directory>] [--stagingrepodir <staging repo directory>] [--profiles <profiles to enable>] [--logsdir <log directory>] [--domajor]"
     exit 1
 }
 
@@ -27,10 +27,12 @@ settingsfile="${scriptdir}/localreleasesettings.xml"
 localm2repo="${basedir}/.m2repo"
 version_date_prefix=`date '+v%Y%m%d%H%M%S'`
 gitbundlerepo=""
+domajor=0
 while true ; do
     case "$1" in
         --localm2repo) shift; localm2repo="$1"; shift;;
         --settingsfile) shift; settingsfile="$1"; shift;;
+        --domajor) domajor=1; shift;;
         --ignoresnapshots) ignoresnapshots="true"; shift;;
         --debug) debug=1; shift;;
         --localrepodir) shift; localrepodir="$1"; shift;;
@@ -94,13 +96,12 @@ git checkout -f "${basebranch}" -b "${preparationbranch}" && mvn -Dmaven.repo.lo
 # Remove completedPhase so we can reuse the release.properties from scratch
 sed -i '/^completedPhase/d' release.properties
 
-# Now replace all the project.rel with the timestamped version
-sed -i "s/\(^project\.rel\.[^=]*\)=\(.*\)/\1=\2-${lockedversion}/" release.properties
-
-# Now replace the SCM with the appropriate developer connection
-#sed -i "s/\(^project\.scm\.[^=]*\.developerConnection\)=\(.*\)/\1=${localscm}/" release.properties
-#sed -i "s/\(^project\.scm\.[^=]*\.connection\)=\(.*\)/\1=${localscm}/" release.properties
-#sed -i "s/\(^scm\.url\)=\(.*\)/\1=${localscm}/" release.properties
+# Replace the released version with the timestamped versions only and
+# only if we are NOT doing a major release
+if [ ${domajor} == 0 ]; then
+    # Now replace all the project.rel with the timestamped version
+    sed -i "s/\(^project\.rel\.[^=]*\)=\(.*\)/\1=\2-${lockedversion}/" release.properties
+fi
 
 # Now save the repository in git bundle if a file is provided till this point
 if [ ! "${gitbundlerepo}" == "" ]; then
