@@ -25,9 +25,11 @@ onlyone=0
 # Perform a major release, in this case the script will use the proper
 # released versions instead of the timestamped ones
 domajor=0
-
+# This is used to set the git identity for the ODL build server to be
+# jenkins-<project>@opendaylight.org
+setgitidentity=0
 function usage {
-    echo "Usage: $0 [--restart_from <target>] [--repositoryList <space separated repository list>] [--odlreporoot <url of ODL repos or mirror of it>] [--onlyone] [--clean_repo] [--override_branch <repo to override> <branch to use>] [--profiles <profiles to activate>] [--domajor]"
+    echo "Usage: $0 [--restart_from <target>] [--repositoryList <space separated repository list>] [--odlreporoot <url of ODL repos or mirror of it>] [--onlyone] [--clean_repo] [--override_branch <repo to override> <branch to use>] [--profiles <profiles to activate>] [--domajor] [--setgitidentity]"
     exit 1
 }
 
@@ -44,8 +46,9 @@ while true ; do
         --onlyone) onlyone=1; shift;;
         --branch) shift; branchforrelease="$1"; shift;;
         --profiles) shift; mavenprofiles="$1"; shift;;
-	-*) echo "Unknown option $1"; unknown_option=1; shift;;
-	*) break ;;
+        --setgitidentity) setgitidentity=1; shift;;
+        -*) echo "Unknown option $1"; unknown_option=1; shift;;
+        *) break ;;
     esac
 done
 
@@ -78,7 +81,7 @@ if [ "${restart_from}" == "" ]; then
     cp "${settingstemplatefile}" "${settingsfile}"
     sed -i "s!#STAGINGREPODIR#!${stagingreleasesm2repo}!g" "${settingsfile}"
     sed -i "s!#TOOLSREPODIR#!${toolsrepodir}!g" "${settingsfile}"
-else 
+else
     skip_initial=1
 fi
 
@@ -117,6 +120,11 @@ for repouri in $repositoryList; do
     fi
     git clone "${repouri}" "${repo}"|| exit 1
     cd "${repogitbase}/${repo}"
+    projectname=`echo ${repo} | sed 's/\.git//'`
+    if [ ${setgitidentity} == 1 ]; then
+        git config user.name "jenkins-${projectname}@opendaylight.org"
+        git config user.email "jenkins-${projectname}@opendaylight.org"
+    fi
     localm2repo="${repogitbase}/${repo}/.m2repo"
     localdeployrepo="${repogitbase}/${repo}/deployrepo"
     locallogsdir="${logdir}/${repo}"
@@ -132,7 +140,7 @@ for repouri in $repositoryList; do
     git checkout "origin/${branchforrepo}" -b baseforrelease
     # Now check if exist a patch file for this repo in that case apply
     # them to the baseforrelease branch because it means they are
-    # still to go out on the master 
+    # still to go out on the master
     if [ -f "${patchesdir}/${branchforrepo}/${repo}" ]; then
         echo "Applying patches ${patchesdir}/${branchforrepo}/${repo}"
         git am "${patchesdir}/${branchforrepo}/${repo}" || exit 1
@@ -141,7 +149,7 @@ for repouri in $repositoryList; do
     mvn -Dmaven.repo.local="${localm2repo}" -U -s "${settingsfile}" -Dversions.repoFilter="stagingrepodir" -Dincludes='org.opendaylight*' -P"${mavenprofiles}" -B org.codehaus.mojo:versions-maven-plugin:2.2-autorelease-SNAPSHOT:rewritepom-to-latest-versions -l "${locallogsdir}/changeversion.log"
     # Commit the change done by use-latest-versions
     git commit -a -s -m "Updated to newer local release versions" && echo "Updated artifacts"
-    
+
     extra_localrelease_args=""
     if [ ${domajor} == 1 ]; then
         extra_localrelease_args="${extra_localrelease_args} --domajor"
@@ -151,7 +159,7 @@ for repouri in $repositoryList; do
         echo "Release failed for $repo"
         exit 1
     fi
-    
+
     # Now stage the released artifacts
     mvn -s "${settingsfile}" -Dwagon.source="file://${localdeployrepo}" -Dwagon.target="file://${stagingreleasesm2repo}" wagon:merge-maven-repos -l "${locallogsdir}/merge-maven-repos.log"
 done
