@@ -1,0 +1,5 @@
+This directory contains hooks for GIT they are:
+
+- commit-msg: hook used to setup the gerrit Change-Id to prepare the
+  patches to be submitted via gerrit
+

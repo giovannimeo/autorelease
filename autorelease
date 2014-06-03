@@ -8,6 +8,7 @@ odlreporoot="https://git.opendaylight.org/gerrit/"
 gitpushroot=""
 repositoryList="yangtools.git controller.git openflowjava.git openflowplugin.git ovsdb.git affinity.git opendove.git snmp4sdn.git vtn.git bgpcep.git lispflowmapping.git integration.git"
 repogitbase="${autoreleasebasedir}/gits"
+hooksdir="${autoreleasebasedir}/hooks"
 stagingreleasesm2repo="${autoreleasebasedir}/stagingreleases/m2repo"
 stagingreleasesgits="${autoreleasebasedir}/stagingreleases/gitbundles"
 patchesdir="${autoreleasebasedir}/patches"
@@ -120,6 +121,11 @@ for repouri in $repositoryList; do
     fi
     git clone "${repouri}" "${repo}"|| exit 1
     cd "${repogitbase}/${repo}"
+
+    # Setup the gerrit change-id hook
+    cp "${hooksdir}/commit-msg" ".git/hooks/"
+    chmod a+x ".git/hooks/commit-msg"
+
     projectname=`echo ${repo} | sed 's/\.git//'`
     if [ ${setgitidentity} == 1 ]; then
         git config user.name "jenkins-${projectname}@opendaylight.org"
