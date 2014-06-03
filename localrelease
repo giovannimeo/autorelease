@@ -126,6 +126,12 @@ fi
 
 # Now try to do a local deployment to make sure we can deploy the files appropriately
 git checkout -f "${localreleasetag}" && mvn -Dmaven.repo.local="${localm2repo}" -Dorg.ops4j.pax.url.mvn.localRepository="${localm2repo}" -DaltDeploymentRepository="localdir::default::file:///${localrepodir}" -s "${settingsfile}" "-P${profiles}" clean javadoc:jar source:jar deploy -l "${logsdir}/localdeploy.log" || exit 1
+
+# Deploy also the git bundlerepo so we keep in the same context
+if [ ! "${gitbundlerepo}" == "" ]; then
+    project=`basename "${gitbundlerepo}"`
+    mvn -Dmaven.repo.local="${localm2repo}" -s "${settingsfile}" -Durl="file:///${localrepodir}"  -DrepositoryId="localdir" -DgroupId="org.opendaylight.gitbundles" -DartifactId="${project}" -Dversion="${lockedversion}" -Dpackaging="gitbundle" -Dclassifier="gitbundle" -Dfile="${gitbundlerepo}" deploy:deploy-file -l "${logsdir}/localdeploy_gitbundle.log"
+fi
 echo "DONE LOCALRELEASE last result is: $?"
 
 exit 0
