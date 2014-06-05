@@ -8,7 +8,7 @@ odlreporoot="https://git.opendaylight.org/gerrit/"
 gitpushroot=""
 repositoryList=""
 repogitbase="${autoreleasebasedir}/gits"
-stagingreleases="${autoreleasebasedir}/stagingreleases"
+stagingreleasesm2repo="${autoreleasebasedir}/stagingreleases/m2repo"
 settingsfile="${autoreleasebasedir}/localreleasesettings.xml"
 branchforrelease='origin/master'
 logdir="${autoreleasebasedir}/logs"
@@ -38,12 +38,6 @@ if [ "${unknown_option}" == "1" ]; then
     exit 1
 fi
 
-if [ "${repositoryList}" == "" ]; then
-    echo "repository list empty this is mandatory"
-    usage
-    exit 1
-fi
-
 if [ "${mavenDeployTargetURL}" == "" ]; then
     echo "deploy target url is empty, this is mandatory"
     usage
@@ -59,27 +53,42 @@ fi
 # Make sure maven doesn't run out of memory
 export MAVEN_OPTS="-Xmx2048m -XX:MaxPermSize=512m"
 
-for repouri in $repositoryList; do
-    repo=`basename ${repouri}`
-    if [ "${repo}" == "${repouri}" ]; then
-        echo "Please provide a fully qualified uri for the repo to push now is:${repouri}"
-        continue
-    fi
-
-    if [ -d "${repogitbase}/${repo}" ]; then
-        cd "${repogitbase}/${repo}"
-        if [ -f "release.properties" ]; then
-            localm2repo="${repogitbase}/${repo}/.m2repo"
-            locallogsdir="${logdir}/${repo}"
-            localdeployrepo="${repogitbase}/${repo}/deployrepo"
-            mkdir -p "${locallogsdir}"
-            localtag=`grep "scm.tag=" release.properties | sed 's/scm.tag=//'`
-            git fetch "${repouri}"
-            git push "${repouri}" ${localtag}:${localtag}
-            mvn -s "${settingsfile}" -Dmaven.repo.local="${localm2repo}" -Dwagon.source="file://${localdeployrepo}" -Dwagon.target="${mavenDeployTargetURL}" -Dwagon.targetId="${mavenDeployTargetID}" wagon:merge-maven-repos -l "${locallogsdir}/push-merge-maven-repos.log"
+if [ ! "${repositoryList}" == "" ]; then
+    for repouri in $repositoryList; do
+        repo=`basename ${repouri}`
+        if [ "${repo}" == "${repouri}" ]; then
+            echo "Please provide a fully qualified uri for the repo to push now is:${repouri}"
+            continue
         fi
-    fi
-done
+        echo "Pushing tag for repository ${repouri}"
+        if [ -d "${repogitbase}/${repo}" ]; then
+            cd "${repogitbase}/${repo}"
+            if [ -f "release.properties" ]; then
+                localm2repo="${repogitbase}/${repo}/.m2repo"
+                locallogsdir="${logdir}/${repo}"
+                localdeployrepo="${repogitbase}/${repo}/deployrepo"
+                mkdir -p "${locallogsdir}"
+                localtag=`grep "scm.tag=" release.properties | sed 's/scm.tag=//'`
+                git fetch "${repouri}"
+                git push "${repouri}" ${localtag}:${localtag}
+            fi
+        fi
+    done
+fi
+
+if [ "${mavenDeployTargetURL}" == "" ]; then
+    echo "deploy target url is empty, cannot deploy"
+    usage
+    exit 0
+fi
+
+if [ "${mavenDeployTargetID}" == "" ]; then
+    echo "deploy target ID is empty, cannot deploy"
+    usage
+    exit 0
+fi
+
+mvn -s "${settingsfile}" -Dmaven.repo.local="${localm2repo}" -Dwagon.source="file://${stagingreleasesm2repo}" -Dwagon.target="${mavenDeployTargetURL}" -Dwagon.targetId="${mavenDeployTargetID}" wagon:merge-maven-repos -l "${logdir}/push-merge-maven-repos.log"
 
 # On success exit with result 0
 exit 0
