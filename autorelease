@@ -160,6 +160,13 @@ for repouri in $repositoryList; do
     if [ ${domajor} == 1 ]; then
         extra_localrelease_args="${extra_localrelease_args} --domajor"
     fi
+
+    # Before proceeding allow to pre-populate the so far available
+    # release versions in the local m2repo, so things like
+    # org.apache.maven.it.Verifier don't need an extra setup
+    mvn -s "${settingsfile}" -Dwagon.source="file://${stagingreleasesm2repo}" -Dwagon.target="file://${localm2repo}" wagon:merge-maven-repos -l "${locallogsdir}/merge-stagingrepo-tolocalm2repo.log"
+
+    # Perform localrelease
     ${autoreleasebasedir}/localrelease --localm2repo "${localm2repo}" --settingsfile "${settingsfile}" --stagingrepodir "${stagingreleasesm2repo}" --localrepodir "${localdeployrepo}" --logsdir "${locallogsdir}" --profiles "${mavenprofiles}" --version_date_prefix "${version_date_prefix}" --gitbundlerepo "${stagingreleasesgits}/${repo}" ${extra_localrelease_args}
     if [ ! $? == 0 ]; then
         echo "Release failed for $repo"
