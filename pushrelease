@@ -65,14 +65,10 @@ if [ ! "${repositoryList}" == "" ]; then
 fi
 
 if [ "${mavenDeployTargetURL}" == "" ]; then
-    echo "deploy target url is empty, cannot deploy"
-    usage
     exit 0
 fi
 
 if [ "${mavenDeployTargetID}" == "" ]; then
-    echo "deploy target ID is empty, cannot deploy"
-    usage
     exit 0
 fi
 
