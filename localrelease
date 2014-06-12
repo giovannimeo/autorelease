@@ -114,18 +114,36 @@ fi
 
 localreleasebranch="autorelease-branch-${lockedversion}"
 localreleasetag="autorelease-tag-${lockedversion}"
-
+if [ ${domajor} == 0 ]; then
+    localreleasecommand="-Dtag=${localreleasetag}"
+else
+    localreleasecommand=""
+    # Make sure to remove also the existing tag in case we want to
+    # have maven to create the tag
+    sed -i '/^scm\.tag/d' release.properties
+fi
 # Now attempt to do a release prepare, this time the branch will be the one will be pushed as well
 # the tag that will be pushed
-git checkout -f "${basebranch}" -b "${localreleasebranch}" && mvn -Dmaven.repo.local="${localm2repo}" -Dorg.ops4j.pax.url.mvn.localRepository="${localm2repo}" -s "${settingsfile}" -Dreleaseplugin.version=2.5 -Dmaven.release.version=2.5 -B org.apache.maven.plugins:maven-release-plugin:2.5:prepare -DpushChanges=false -Dtag="${localreleasetag}" -DcompletionGoals="help:system" -DpreparationGoals="clean install" -DignoreSnapshots=${ignoresnapshots} "-P${profiles}" -Darguments="-Dmaven.repo.local=\"${localm2repo}\" -Dorg.ops4j.pax.url.mvn.localRepository=\"${localm2repo}\" -s \"${settingsfile}\" -P${profiles}" -l "${logsdir}/localrelease-branch.log" || exit 1
+git checkout -f "${basebranch}" -b "${localreleasebranch}" && mvn -Dmaven.repo.local="${localm2repo}" -Dorg.ops4j.pax.url.mvn.localRepository="${localm2repo}" -s "${settingsfile}" -Dreleaseplugin.version=2.5 -Dmaven.release.version=2.5 -B org.apache.maven.plugins:maven-release-plugin:2.5:prepare -DpushChanges=false ${localreleasecommand} -DcompletionGoals="help:system" -DpreparationGoals="clean install" -DignoreSnapshots=${ignoresnapshots} "-P${profiles}" -Darguments="-Dmaven.repo.local=\"${localm2repo}\" -Dorg.ops4j.pax.url.mvn.localRepository=\"${localm2repo}\" -s \"${settingsfile}\" -P${profiles}" -l "${logsdir}/localrelease-branch.log" || exit 1
+
+releasetag="${localreleasetag}"
+if [ -f "${basedir}/release.properties" ]; then
+    releasetag=`grep "scm.tag=" "${basedir}/release.properties" | sed 's/scm.tag=//'`
+fi
+
+# Add a pointer tag to the scmtag, so we don't need to make guesses
+git symbolic-ref refs/tags/scmtag refs/tags/${releasetag}
+
+# Add a pointer tag to the next development version change
+git symbolic-ref refs/tags/nextdev refs/heads/${localreleasebranch}
 
 # Now save the repository in git bundle if a file is provided, including the localrelease branch and tag
 if [ ! "${gitbundlerepo}" == "" ]; then
-    git bundle create "${gitbundlerepo}" "${localreleasetag}" "${preparationtag}" "${basebranch_initial}" "${basebranch}" "${localreleasebranch}" "${preparationbranch}" ${updateversiontag}
+    git bundle create "${gitbundlerepo}" "${releasetag}" "${preparationtag}" "${basebranch_initial}" "${basebranch}" "${localreleasebranch}" "${preparationbranch}" ${updateversiontag} refs/tags/scmtag refs/tags/nextdev
 fi
 
 # Now try to do a local deployment to make sure we can deploy the files appropriately
-git checkout -f "${localreleasetag}" && mvn -Dmaven.repo.local="${localm2repo}" -Dorg.ops4j.pax.url.mvn.localRepository="${localm2repo}" -DaltDeploymentRepository="localdir::default::file:///${localrepodir}" -s "${settingsfile}" "-P${profiles}" clean javadoc:jar source:jar deploy -l "${logsdir}/localdeploy.log" || exit 1
+git checkout -f "${releasetag}" && mvn -Dmaven.repo.local="${localm2repo}" -Dorg.ops4j.pax.url.mvn.localRepository="${localm2repo}" -DaltDeploymentRepository="localdir::default::file:///${localrepodir}" -s "${settingsfile}" "-P${profiles}" clean javadoc:jar source:jar deploy -l "${logsdir}/localdeploy.log" || exit 1
 
 # Deploy also the git bundlerepo so we keep in the same context
 if [ ! "${gitbundlerepo}" == "" ]; then
