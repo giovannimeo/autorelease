@@ -1,0 +1,67 @@
+From 75d6d9d4a03252325fe621487b16ab05fe5070f8 Mon Sep 17 00:00:00 2001
+From: Giovanni Meo <gmeo@cisco.com>
+Date: Mon, 16 Jun 2014 17:10:29 +0200
+Subject: [PATCH] Temporarely remove lispflowmapping
+
+- lispflowmapping is not ready, temporarely removing it
+
+Signed-off-by: Giovanni Meo <gmeo@cisco.com>
+---
+ distributions/serviceprovider/pom.xml | 41 -----------------------------------
+ 1 file changed, 41 deletions(-)
+
+diff --git a/distributions/serviceprovider/pom.xml b/distributions/serviceprovider/pom.xml
+index 686337a..65c18fc 100644
+--- a/distributions/serviceprovider/pom.xml
++++ b/distributions/serviceprovider/pom.xml
+@@ -429,47 +429,6 @@ see https://git.opendaylight.org/gerrit/#/c/390/
+     </dependency>
+ 
+     <!-- lispflowmapping -->
+-	<dependency>
+-      <groupId>org.opendaylight.lispflowmapping</groupId>
+-      <artifactId>mappingservice.yangmodel</artifactId>
+-      <version>${lispflowmapping.version}</version>
+-    </dependency>
+-
+-    <dependency>
+-      <groupId>org.opendaylight.lispflowmapping</groupId>
+-      <artifactId>mappingservice.api</artifactId>
+-      <version>${lispflowmapping.version}</version>
+-    </dependency>
+-    
+-    <dependency>
+-      <groupId>org.opendaylight.lispflowmapping</groupId>
+-      <artifactId>mappingservice.config</artifactId>
+-      <version>${lispflowmapping.version}</version>
+-    </dependency>
+-
+-    <dependency>
+-      <groupId>org.opendaylight.lispflowmapping</groupId>
+-      <artifactId>mappingservice.implementation</artifactId>
+-      <version>${lispflowmapping.version}</version>
+-    </dependency>
+-    
+-    <dependency>
+-      <groupId>org.opendaylight.lispflowmapping</groupId>
+-      <artifactId>mappingservice.clusterdao</artifactId>
+-      <version>${lispflowmapping.version}</version>
+-    </dependency>
+-
+-    <dependency>
+-      <groupId>org.opendaylight.lispflowmapping</groupId>
+-      <artifactId>mappingservice.northbound</artifactId>
+-      <version>${lispflowmapping.version}</version>
+-    </dependency>
+-
+-    <dependency>
+-      <groupId>org.opendaylight.lispflowmapping</groupId>
+-      <artifactId>mappingservice.southbound</artifactId>
+-      <version>${lispflowmapping.version}</version>
+-    </dependency>
+ 
+     <!--SNMP4SDN-->
+     <dependency>
+-- 
+1.9.3
+
