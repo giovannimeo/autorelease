@@ -41,8 +41,8 @@ while true ; do
         --stagingrepodir) shift; stagingrepodir="$1"; shift;;
         --version_date_prefix) shift; version_date_prefix="$1"; shift;;
         --gitbundlerepo) shift; gitbundlerepo="$1"; shift;;
-	-*) echo "Unknown option $1"; unknown_option=1; shift;;
-	*) break ;;
+        -*) echo "Unknown option $1"; unknown_option=1; shift;;
+        *) break ;;
     esac
 done
 
@@ -126,9 +126,16 @@ fi
 # the tag that will be pushed
 git checkout -f "${basebranch}" -b "${localreleasebranch}" && mvn -Dmaven.repo.local="${localm2repo}" -Dorg.ops4j.pax.url.mvn.localRepository="${localm2repo}" -s "${settingsfile}" -Dreleaseplugin.version=2.5 -Dmaven.release.version=2.5 -B org.apache.maven.plugins:maven-release-plugin:2.5:prepare -DpushChanges=false ${localreleasecommand} -DcompletionGoals="help:system" -DpreparationGoals="clean install" -DignoreSnapshots=${ignoresnapshots} "-P${profiles}" -Darguments="-Dmaven.repo.local=\"${localm2repo}\" -Dorg.ops4j.pax.url.mvn.localRepository=\"${localm2repo}\" -s \"${settingsfile}\" -P${profiles}" -l "${logsdir}/localrelease-branch.log" || exit 1
 
+## By default pick a version for the gitbundles that is inline with
+## the version of the bundles created, so to easily correlate
+gitbundleversion="${lockedversion}"
 releasetag="${localreleasetag}"
 if [ -f "${basedir}/release.properties" ]; then
     releasetag=`grep "scm.tag=" "${basedir}/release.properties" | sed 's/scm.tag=//'`
+    gitbundleversion=`echo ${releasetag} | grep  -o "[0-9]\+\\..*$"`
+    if [ "${gitbundleversion}" == "" ]; then
+        gitbundleversion="${lockedversion}"
+    fi
 fi
 
 # Add a pointer tag to the scmtag, so we don't need to make guesses
@@ -148,7 +155,7 @@ git checkout -f "${releasetag}" && mvn -Dmaven.repo.local="${localm2repo}" -Dorg
 # Deploy also the git bundlerepo so we keep in the same context
 if [ ! "${gitbundlerepo}" == "" ]; then
     project=`basename "${gitbundlerepo}"`
-    mvn -Dmaven.repo.local="${localm2repo}" -s "${settingsfile}" -Durl="file:///${localrepodir}"  -DrepositoryId="localdir" -DgroupId="org.opendaylight.gitbundles" -DartifactId="${project}" -Dversion="${lockedversion}" -Dpackaging="gitbundle" -Dclassifier="gitbundle" -Dfile="${gitbundlerepo}" deploy:deploy-file -l "${logsdir}/localdeploy_gitbundle.log"
+    mvn -Dmaven.repo.local="${localm2repo}" -s "${settingsfile}" -Durl="file:///${localrepodir}"  -DrepositoryId="localdir" -DgroupId="org.opendaylight.gitbundles" -DartifactId="${project}" -Dversion="${gitbundleversion}" -Dpackaging="gitbundle" -Dclassifier="gitbundle" -Dfile="${gitbundlerepo}" deploy:deploy-file -l "${logsdir}/localdeploy_gitbundle.log"
 fi
 echo "DONE LOCALRELEASE last result is: $?"
 
