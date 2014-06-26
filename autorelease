@@ -19,6 +19,7 @@ branchforrelease='master'
 logdir="${autoreleasebasedir}/logs"
 mavenprofiles="integrationtests,jni"
 clean_repo=0
+globalmavensettings=""
 version_date_prefix=`date '+v%Y%m%d%H%M%S'`
 declare -A override_branch
 # Run only on one repository useful for incremental tests
@@ -30,7 +31,7 @@ domajor=0
 # jenkins-<project>@opendaylight.org
 setgitidentity=0
 function usage {
-    echo "Usage: $0 [--restart_from <target>] [--repositoryList <space separated repository list>] [--odlreporoot <url of ODL repos or mirror of it>] [--onlyone] [--clean_repo] [--override_branch <repo to override> <branch to use>] [--profiles <profiles to activate>] [--domajor] [--setgitidentity]"
+    echo "Usage: $0 [--restart_from <target>] [--repositoryList <space separated repository list>] [--odlreporoot <url of ODL repos or mirror of it>] [--onlyone] [--clean_repo] [--override_branch <repo to override> <branch to use>] [--profiles <profiles to activate>] [--domajor] [--setgitidentity] [--globalmavensettings <settings file>]"
     exit 1
 }
 
@@ -48,6 +49,7 @@ while true ; do
         --branch) shift; branchforrelease="$1"; shift;;
         --profiles) shift; mavenprofiles="$1"; shift;;
         --setgitidentity) setgitidentity=1; shift;;
+        --globalmavensettings) shift; globalmavensettings="$1"; shift;;
         -*) echo "Unknown option $1"; unknown_option=1; shift;;
         *) break ;;
     esac
@@ -58,12 +60,19 @@ if [ "${unknown_option}" == "1" ]; then
     exit 1
 fi
 
+# Allow to override the global maven settings to get site-wide options
+if [ "${globalmavensettings}" == "" ]; then
+    settingsopts="-s \"${settingsfile}\""
+else
+    settingsopts="-s \"${settingsfile}\" -gs \"${globalmavensettings}\""
+fi
+
 # Make sure maven doesn't run out of memory
 export MAVEN_OPTS="-Xmx2048m -XX:MaxPermSize=512m"
 
 # First of all lets make sure we build the toolsrepo
 cd "${autoreleasebasedir}/versions-plugin"
-mvn -U -DaltDeploymentRepository="localdir::default::file://${toolsrepodir}" clean deploy
+mvn -U ${settingsopts} -DaltDeploymentRepository="localdir::default::file://${toolsrepodir}" clean deploy
 
 skip_initial=0
 if [ "${restart_from}" == "" ]; then
@@ -152,7 +161,7 @@ for repouri in $repositoryList; do
         git am "${patchesdir}/${branchforrepo}/${repo}" || exit 1
     fi
     # Update the version to the latest ones in the repo
-    mvn -Dmaven.repo.local="${localm2repo}" -U -s "${settingsfile}" -Dversions.repoFilter="stagingrepodir" -Dincludes='org.opendaylight*' -P"${mavenprofiles}" -B org.codehaus.mojo:versions-maven-plugin:2.2-autorelease-SNAPSHOT:rewritepom-to-latest-versions -l "${locallogsdir}/changeversion.log"
+    mvn -Dmaven.repo.local="${localm2repo}" -U ${settingsopts} -Dversions.repoFilter="stagingrepodir" -Dincludes='org.opendaylight*' -P"${mavenprofiles}" -B org.codehaus.mojo:versions-maven-plugin:2.2-autorelease-SNAPSHOT:rewritepom-to-latest-versions -l "${locallogsdir}/changeversion.log"
     # Commit the change done by use-latest-versions
     git commit -a -s -m "Updated to newer local release versions" && git tag update-cross-project-versions && echo "Updated artifacts"
 
@@ -161,10 +170,14 @@ for repouri in $repositoryList; do
         extra_localrelease_args="${extra_localrelease_args} --domajor"
     fi
 
+    if [ ! "${globalmavensettings}" == "" ]; then
+        extra_localrelease_args="${extra_localrelease_args} --globalmavensettings \"${globalmavensettings}\""
+    fi
+
     # Before proceeding allow to pre-populate the so far available
     # release versions in the local m2repo, so things like
     # org.apache.maven.it.Verifier don't need an extra setup
-    mvn -s "${settingsfile}" -Dwagon.source="file://${stagingreleasesm2repo}" -Dwagon.target="file://${localm2repo}" wagon:merge-maven-repos -l "${locallogsdir}/merge-stagingrepo-tolocalm2repo.log"
+    mvn ${settingsopts} -Dwagon.source="file://${stagingreleasesm2repo}" -Dwagon.target="file://${localm2repo}" wagon:merge-maven-repos -l "${locallogsdir}/merge-stagingrepo-tolocalm2repo.log"
 
     # Perform localrelease
     ${autoreleasebasedir}/localrelease --localm2repo "${localm2repo}" --settingsfile "${settingsfile}" --stagingrepodir "${stagingreleasesm2repo}" --localrepodir "${localdeployrepo}" --logsdir "${locallogsdir}" --profiles "${mavenprofiles}" --version_date_prefix "${version_date_prefix}" --gitbundlerepo "${stagingreleasesgits}/${repo}" ${extra_localrelease_args}
@@ -174,7 +187,7 @@ for repouri in $repositoryList; do
     fi
 
     # Now stage the released artifacts
-    mvn -s "${settingsfile}" -Dwagon.source="file://${localdeployrepo}" -Dwagon.target="file://${stagingreleasesm2repo}" wagon:merge-maven-repos -l "${locallogsdir}/merge-maven-repos.log"
+    mvn ${settingsopts} -Dwagon.source="file://${localdeployrepo}" -Dwagon.target="file://${stagingreleasesm2repo}" wagon:merge-maven-repos -l "${locallogsdir}/merge-maven-repos.log"
 done
 
 # On success exit with result 0
