@@ -70,10 +70,6 @@ fi
 # Make sure maven doesn't run out of memory
 export MAVEN_OPTS="-Xmx2048m -XX:MaxPermSize=512m"
 
-# First of all lets make sure we build the toolsrepo
-cd "${autoreleasebasedir}/versions-plugin"
-mvn -U ${settingsopts} -DaltDeploymentRepository="localdir::default::file://${toolsrepodir}" clean deploy
-
 skip_initial=0
 if [ "${restart_from}" == "" ]; then
     # Cleanup
@@ -94,6 +90,10 @@ if [ "${restart_from}" == "" ]; then
 else
     skip_initial=1
 fi
+
+# Time to rebuild the tools, honoring the settings file though
+cd "${autoreleasebasedir}/versions-plugin"
+mvn -U ${settingsopts} -DaltDeploymentRepository="localdir::default::file://${toolsrepodir}" clean deploy
 
 firstrun=1
 for repouri in $repositoryList; do
