@@ -158,7 +158,7 @@ for repouri in $repositoryList; do
     # still to go out on the master
     if [ -f "${patchesdir}/${branchforrepo}/${repo}" ]; then
         echo "Applying patches ${patchesdir}/${branchforrepo}/${repo}"
-        git am "${patchesdir}/${branchforrepo}/${repo}" || git am --abort && echo "Rollback the patch, didn't apply cleanly, maybe was already merged"
+        git am "${patchesdir}/${branchforrepo}/${repo}" || git am --abort
     fi
     # Update the version to the latest ones in the repo
     mvn -Dmaven.repo.local="${localm2repo}" -U ${settingsopts} -Dversions.repoFilter="stagingrepodir" -Dincludes='org.opendaylight*' -P"${mavenprofiles}" -B org.codehaus.mojo:versions-maven-plugin:2.2-autorelease-SNAPSHOT:rewritepom-to-latest-versions -l "${locallogsdir}/changeversion.log"
