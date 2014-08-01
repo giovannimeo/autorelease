@@ -1,0 +1,28 @@
+From 689f1593e5b022389cb78ccfeb9bf6c5dcd19efb Mon Sep 17 00:00:00 2001
+From: Giovanni Meo <gmeo@cisco.com>
+Date: Fri, 1 Aug 2014 18:53:12 +0200
+Subject: [PATCH] yang-data-json is in the feature file, but not built
+
+- Remove reference to a no-longer existent artifact
+
+Change-Id: Ib9fe2e388f658114e0deadfa4dbab0f403a1fed7
+Signed-off-by: Giovanni Meo <gmeo@cisco.com>
+---
+ common/features/src/main/resources/features.xml | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/common/features/src/main/resources/features.xml b/common/features/src/main/resources/features.xml
+index ee51ec6..8d68bbe 100644
+--- a/common/features/src/main/resources/features.xml
++++ b/common/features/src/main/resources/features.xml
+@@ -33,7 +33,6 @@
+         <bundle>mvn:commons-io/commons-io/${commons.io.version}</bundle>
+         <bundle>mvn:org.opendaylight.yangtools/yang-data-api/${project.version}</bundle>
+         <bundle>mvn:org.opendaylight.yangtools/yang-data-impl/${project.version}</bundle>
+-        <bundle>mvn:org.opendaylight.yangtools/yang-data-json/${project.version}</bundle>
+         <bundle>mvn:org.opendaylight.yangtools/yang-data-operations/${project.version}</bundle>
+         <bundle>mvn:org.opendaylight.yangtools/yang-data-util/${project.version}</bundle>
+         <bundle>mvn:org.opendaylight.yangtools/yang-model-api/${project.version}</bundle>
+-- 
+2.0.3
+
