@@ -1,0 +1,308 @@
+From 445bc854d4662bdb748d7ce2b486be077f106e2b Mon Sep 17 00:00:00 2001
+From: Giovanni Meo <gmeo@cisco.com>
+Date: Mon, 4 Aug 2014 18:22:11 +0200
+Subject: [PATCH] Remove old dependencies
+
+- Remove dependencies that prevent releasing of artifacts
+
+Change-Id: I866e4b36e71c004b925bd181412ff4df91b3091f
+Signed-off-by: Giovanni Meo <gmeo@cisco.com>
+---
+ features/config-netty/pom.xml                      |  1 -
+ features/config-persister/pom.xml                  |  2 -
+ features/netconf/pom.xml                           |  2 -
+ features/protocol-framework/pom.xml                |  1 -
+ opendaylight/commons/opendaylight/pom.xml          | 61 ++++++++++++++++++++--
+ .../distribution/opendaylight-karaf/pom.xml        |  3 --
+ .../flow-management-compatibility/pom.xml          |  4 --
+ .../inventory-topology-compatibility/pom.xml       |  4 --
+ .../md-sal/forwardingrules-manager/pom.xml         |  4 --
+ opendaylight/md-sal/sal-binding-dom-it/pom.xml     |  5 --
+ opendaylight/md-sal/sal-binding-it/pom.xml         |  5 --
+ .../md-sal/topology-lldp-discovery/pom.xml         |  4 --
+ opendaylight/netconf/netconf-cli/pom.xml           |  6 ---
+ 13 files changed, 56 insertions(+), 46 deletions(-)
+
+diff --git a/features/config-netty/pom.xml b/features/config-netty/pom.xml
+index 98b97d1..16fd975 100644
+--- a/features/config-netty/pom.xml
++++ b/features/config-netty/pom.xml
+@@ -19,7 +19,6 @@
+     <dependency>
+       <groupId>org.opendaylight.controller</groupId>
+       <artifactId>config-persister-features</artifactId>
+-      <version>${config.version}</version>
+       <classifier>features</classifier>
+       <type>xml</type>
+       <scope>runtime</scope>
+diff --git a/features/config-persister/pom.xml b/features/config-persister/pom.xml
+index 969d0c8..ec1520e 100644
+--- a/features/config-persister/pom.xml
++++ b/features/config-persister/pom.xml
+@@ -27,7 +27,6 @@
+     <dependency>
+       <groupId>org.opendaylight.controller</groupId>
+       <artifactId>netconf-features</artifactId>
+-      <version>${netconf.version}</version>
+       <classifier>features</classifier>
+       <type>xml</type>
+       <scope>runtime</scope>
+@@ -35,7 +34,6 @@
+     <dependency>
+       <groupId>org.opendaylight.controller</groupId>
+       <artifactId>config-features</artifactId>
+-      <version>${config.version}</version>
+       <classifier>features</classifier>
+       <type>xml</type>
+       <scope>runtime</scope>
+diff --git a/features/netconf/pom.xml b/features/netconf/pom.xml
+index 90c088e..856557c 100644
+--- a/features/netconf/pom.xml
++++ b/features/netconf/pom.xml
+@@ -19,7 +19,6 @@
+     <dependency>
+       <groupId>org.opendaylight.controller</groupId>
+       <artifactId>config-features</artifactId>
+-      <version>${config.version}</version>
+       <classifier>features</classifier>
+       <type>xml</type>
+       <scope>runtime</scope>
+@@ -27,7 +26,6 @@
+     <dependency>
+       <groupId>org.opendaylight.controller</groupId>
+       <artifactId>features-odl-protocol-framework</artifactId>
+-      <version>${protocol-framework.version}</version>
+       <classifier>features</classifier>
+       <type>xml</type>
+       <scope>runtime</scope>
+diff --git a/features/protocol-framework/pom.xml b/features/protocol-framework/pom.xml
+index 045ac2d..ba5dd18 100644
+--- a/features/protocol-framework/pom.xml
++++ b/features/protocol-framework/pom.xml
+@@ -19,7 +19,6 @@
+     <dependency>
+       <groupId>org.opendaylight.controller</groupId>
+       <artifactId>config-features</artifactId>
+-      <version>${config.version}</version>
+       <classifier>features</classifier>
+       <type>xml</type>
+       <scope>runtime</scope>
+diff --git a/opendaylight/commons/opendaylight/pom.xml b/opendaylight/commons/opendaylight/pom.xml
+index a7bbbe7..53590a4 100644
+--- a/opendaylight/commons/opendaylight/pom.xml
++++ b/opendaylight/commons/opendaylight/pom.xml
+@@ -1485,11 +1485,6 @@
+       </dependency>
+       <dependency>
+         <groupId>org.opendaylight.controller.model</groupId>
+-        <artifactId>model-flow-management</artifactId>
+-        <version>${mdsal.version}</version>
+-      </dependency>
+-      <dependency>
+-        <groupId>org.opendaylight.controller.model</groupId>
+         <artifactId>model-flow-service</artifactId>
+         <version>${mdsal.version}</version>
+       </dependency>
+@@ -1795,6 +1790,62 @@
+         <version>${yangtools.version}</version>
+         <scope>test</scope>
+       </dependency>
++      <dependency>
++        <groupId>org.opendaylight.controller</groupId>
++        <artifactId>config-features</artifactId>
++        <version>${config.version}</version>
++        <classifier>features</classifier>
++        <type>xml</type>
++        <scope>runtime</scope>
++      </dependency>
++      <dependency>
++        <groupId>org.opendaylight.controller</groupId>
++        <artifactId>features-odl-protocol-framework</artifactId>
++        <version>${protocol-framework.version}</version>
++        <classifier>features</classifier>
++        <type>xml</type>
++        <scope>runtime</scope>
++      </dependency>
++      <dependency>
++        <groupId>org.opendaylight.controller</groupId>
++        <artifactId>netconf-features</artifactId>
++        <version>${netconf.version}</version>
++        <classifier>features</classifier>
++        <type>xml</type>
++        <scope>runtime</scope>
++      </dependency>
++      <dependency>
++        <groupId>org.opendaylight.controller</groupId>
++        <artifactId>config-persister-features</artifactId>
++        <version>${config.version}</version>
++        <classifier>features</classifier>
++        <type>xml</type>
++        <scope>runtime</scope>
++      </dependency>
++      <dependency>
++        <groupId>org.opendaylight.controller</groupId>
++        <artifactId>config-netty-features</artifactId>
++        <version>${config.version}</version>
++        <classifier>features</classifier>
++        <type>xml</type>
++        <scope>runtime</scope>
++      </dependency>
++      <dependency>
++        <groupId>org.opendaylight.controller</groupId>
++        <artifactId>features-adsal</artifactId>
++        <version>${sal.version}</version>
++        <classifier>features</classifier>
++        <type>xml</type>
++        <scope>runtime</scope>
++      </dependency>
++      <dependency>
++        <groupId>org.opendaylight.controller</groupId>
++        <artifactId>mdsal-features</artifactId>
++        <version>${mdsal.version}</version>
++        <classifier>features</classifier>
++        <type>xml</type>
++        <scope>runtime</scope>
++      </dependency>
+     </dependencies>
+   </dependencyManagement>
+ 
+diff --git a/opendaylight/distribution/opendaylight-karaf/pom.xml b/opendaylight/distribution/opendaylight-karaf/pom.xml
+index 977fab1..5effbb0 100644
+--- a/opendaylight/distribution/opendaylight-karaf/pom.xml
++++ b/opendaylight/distribution/opendaylight-karaf/pom.xml
+@@ -64,7 +64,6 @@
+     <dependency>
+       <groupId>org.opendaylight.controller</groupId>
+       <artifactId>config-netty-features</artifactId>
+-      <version>${config.version}</version>
+       <classifier>features</classifier>
+       <type>xml</type>
+       <scope>runtime</scope>
+@@ -74,7 +73,6 @@
+     <dependency>
+       <groupId>org.opendaylight.controller</groupId>
+       <artifactId>features-adsal</artifactId>
+-      <version>${sal.version}</version>
+       <classifier>features</classifier>
+       <type>xml</type>
+       <scope>runtime</scope>
+@@ -92,7 +90,6 @@
+     <dependency>
+       <groupId>org.opendaylight.controller</groupId>
+       <artifactId>mdsal-features</artifactId>
+-      <version>${mdsal.version}</version>
+       <classifier>features</classifier>
+       <type>xml</type>
+       <scope>runtime</scope>
+diff --git a/opendaylight/md-sal/compatibility/flow-management-compatibility/pom.xml b/opendaylight/md-sal/compatibility/flow-management-compatibility/pom.xml
+index 7770c15..5bc3a78 100644
+--- a/opendaylight/md-sal/compatibility/flow-management-compatibility/pom.xml
++++ b/opendaylight/md-sal/compatibility/flow-management-compatibility/pom.xml
+@@ -31,10 +31,6 @@
+       <artifactId>sal-compatibility</artifactId>
+     </dependency>
+     <dependency>
+-      <groupId>org.opendaylight.controller.model</groupId>
+-      <artifactId>model-flow-management</artifactId>
+-    </dependency>
+-    <dependency>
+       <groupId>org.slf4j</groupId>
+       <artifactId>slf4j-api</artifactId>
+     </dependency>
+diff --git a/opendaylight/md-sal/compatibility/inventory-topology-compatibility/pom.xml b/opendaylight/md-sal/compatibility/inventory-topology-compatibility/pom.xml
+index 62dc2ff..137b29e 100644
+--- a/opendaylight/md-sal/compatibility/inventory-topology-compatibility/pom.xml
++++ b/opendaylight/md-sal/compatibility/inventory-topology-compatibility/pom.xml
+@@ -44,10 +44,6 @@
+     </dependency>
+     <dependency>
+       <groupId>org.opendaylight.controller.model</groupId>
+-      <artifactId>model-flow-management</artifactId>
+-    </dependency>
+-    <dependency>
+-      <groupId>org.opendaylight.controller.model</groupId>
+       <artifactId>model-topology</artifactId>
+     </dependency>
+     <dependency>
+diff --git a/opendaylight/md-sal/forwardingrules-manager/pom.xml b/opendaylight/md-sal/forwardingrules-manager/pom.xml
+index ed5e192..5a9b190 100644
+--- a/opendaylight/md-sal/forwardingrules-manager/pom.xml
++++ b/opendaylight/md-sal/forwardingrules-manager/pom.xml
+@@ -21,10 +21,6 @@
+     </dependency>
+     <dependency>
+       <groupId>org.opendaylight.controller.model</groupId>
+-      <artifactId>model-flow-management</artifactId>
+-    </dependency>
+-    <dependency>
+-      <groupId>org.opendaylight.controller.model</groupId>
+       <artifactId>model-flow-service</artifactId>
+     </dependency>
+     <dependency>
+diff --git a/opendaylight/md-sal/sal-binding-dom-it/pom.xml b/opendaylight/md-sal/sal-binding-dom-it/pom.xml
+index 42d5cff..7a66c41 100644
+--- a/opendaylight/md-sal/sal-binding-dom-it/pom.xml
++++ b/opendaylight/md-sal/sal-binding-dom-it/pom.xml
+@@ -31,11 +31,6 @@
+     </dependency>
+     <dependency>
+       <groupId>org.opendaylight.controller.model</groupId>
+-      <artifactId>model-flow-management</artifactId>
+-      <scope>test</scope>
+-    </dependency>
+-    <dependency>
+-      <groupId>org.opendaylight.controller.model</groupId>
+       <artifactId>model-flow-service</artifactId>
+       <scope>test</scope>
+     </dependency>
+diff --git a/opendaylight/md-sal/sal-binding-it/pom.xml b/opendaylight/md-sal/sal-binding-it/pom.xml
+index b8bb891..b6a0a47 100644
+--- a/opendaylight/md-sal/sal-binding-it/pom.xml
++++ b/opendaylight/md-sal/sal-binding-it/pom.xml
+@@ -126,11 +126,6 @@
+     </dependency>
+     <dependency>
+       <groupId>org.opendaylight.controller.model</groupId>
+-      <artifactId>model-flow-management</artifactId>
+-      <scope>provided</scope>
+-    </dependency>
+-    <dependency>
+-      <groupId>org.opendaylight.controller.model</groupId>
+       <artifactId>model-flow-service</artifactId>
+       <scope>provided</scope>
+     </dependency>
+diff --git a/opendaylight/md-sal/topology-lldp-discovery/pom.xml b/opendaylight/md-sal/topology-lldp-discovery/pom.xml
+index 2c8571c..e01a0d5 100644
+--- a/opendaylight/md-sal/topology-lldp-discovery/pom.xml
++++ b/opendaylight/md-sal/topology-lldp-discovery/pom.xml
+@@ -47,10 +47,6 @@
+     </dependency>
+     <dependency>
+       <groupId>org.opendaylight.controller.model</groupId>
+-      <artifactId>model-flow-management</artifactId>
+-    </dependency>
+-    <dependency>
+-      <groupId>org.opendaylight.controller.model</groupId>
+       <artifactId>model-flow-service</artifactId>
+     </dependency>
+     <dependency>
+diff --git a/opendaylight/netconf/netconf-cli/pom.xml b/opendaylight/netconf/netconf-cli/pom.xml
+index cd7a1aa..2fd32e9 100644
+--- a/opendaylight/netconf/netconf-cli/pom.xml
++++ b/opendaylight/netconf/netconf-cli/pom.xml
+@@ -52,12 +52,6 @@
+     <dependency>
+       <groupId>org.opendaylight.yangtools</groupId>
+       <artifactId>yang-data-impl</artifactId>
+-      <!--        <version>0.6.2-SNAPSHOT</version>-->
+-    </dependency>
+-    <dependency>
+-      <groupId>org.opendaylight.yangtools</groupId>
+-      <artifactId>yang-data-json</artifactId>
+-      <version>0.6.2-SNAPSHOT</version>
+     </dependency>
+     <dependency>
+       <groupId>org.opendaylight.yangtools</groupId>
+-- 
+2.0.3
+
