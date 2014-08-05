@@ -1,0 +1,96 @@
+From a71a84b96813aada3eff832215a4601d973256fc Mon Sep 17 00:00:00 2001
+From: Giovanni Meo <gmeo@cisco.com>
+Date: Tue, 5 Aug 2014 15:52:22 +0200
+Subject: [PATCH] Remove reference to stale model-flow-management
+
+- Remove reference to an artifact that is no longer created in
+controller
+
+Change-Id: I6fa09234a23760220e32df689d0728b579ba34f6
+Signed-off-by: Giovanni Meo <gmeo@cisco.com>
+---
+ commons/parent/pom.xml               | 5 -----
+ openstack/net-virt-providers/pom.xml | 6 +-----
+ 2 files changed, 1 insertion(+), 10 deletions(-)
+
+diff --git a/commons/parent/pom.xml b/commons/parent/pom.xml
+index b51b7f1..768edfa 100755
+--- a/commons/parent/pom.xml
++++ b/commons/parent/pom.xml
+@@ -152,9 +152,4 @@
+       </dependency>
+       <dependency>
+         <groupId>org.opendaylight.controller.model</groupId>
+-        <artifactId>model-flow-management</artifactId>
+-        <version>${mdsal.version}</version>
+-      </dependency>
+-      <dependency>
+-        <groupId>org.opendaylight.controller.model</groupId>
+         <artifactId>model-flow-service</artifactId>
+diff --git a/openstack/net-virt-providers/pom.xml b/openstack/net-virt-providers/pom.xml
+index b91b6ce..3e137ff 100644
+--- a/openstack/net-virt-providers/pom.xml
++++ b/openstack/net-virt-providers/pom.xml
+@@ -42,10 +42,6 @@
+         </dependency>
+         <dependency>
+             <groupId>org.opendaylight.controller.model</groupId>
+-            <artifactId>model-flow-management</artifactId>
+-        </dependency>
+-        <dependency>
+-            <groupId>org.opendaylight.controller.model</groupId>
+             <artifactId>model-flow-service</artifactId>
+         </dependency>
+         <dependency>
+@@ -114,4 +110,4 @@
+             </plugin>
+         </plugins>
+     </build>
+-</project>
+\ No newline at end of file
++</project>
+diff --git a/commons/integrationtest/pom.xml b/commons/integrationtest/pom.xml
+index 2c89a47..756a134 100644
+--- a/commons/integrationtest/pom.xml
++++ b/commons/integrationtest/pom.xml
+@@ -725,37 +725,30 @@
+     <dependency>
+       <groupId>org.opendaylight.ovsdb</groupId>
+       <artifactId>library</artifactId>
+-      <version>${ovsdb.library.version}</version>
+     </dependency>
+     <dependency>
+       <groupId>org.opendaylight.ovsdb</groupId>
+       <artifactId>plugin</artifactId>
+-      <version>${ovsdb.plugin.version}</version>
+     </dependency>
+     <dependency>
+       <groupId>org.opendaylight.ovsdb</groupId>
+       <artifactId>openstack.net-virt</artifactId>
+-      <version>${openstack.netvirt.version}</version>
+     </dependency>
+     <dependency>
+       <groupId>org.opendaylight.ovsdb</groupId>
+       <artifactId>openstack.net-virt</artifactId>
+-      <version>${openstack.netvirt.providers.version}</version>
+     </dependency>
+     <dependency>
+       <groupId>org.opendaylight.ovsdb</groupId>
+       <artifactId>northbound</artifactId>
+-      <version>${ovsdb.northbound.version}</version>
+     </dependency>
+     <dependency>
+       <groupId>org.opendaylight.ovsdb</groupId>
+       <artifactId>schema.openvswitch</artifactId>
+-      <version>${schema.openvswitch.version}</version>
+     </dependency>
+     <dependency>
+       <groupId>org.opendaylight.ovsdb</groupId>
+       <artifactId>schema.hardwarevtep</artifactId>
+-      <version>${schema.hardwarevtep.version}</version>
+     </dependency>
+ 
+     <!-- Add Pax Exam -->
+-- 
+2.0.3
+
