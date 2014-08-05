@@ -1,56 +1,24 @@
-From a71a84b96813aada3eff832215a4601d973256fc Mon Sep 17 00:00:00 2001
+From 37d185badfbd2bba474fddb721b05de2a469ed63 Mon Sep 17 00:00:00 2001
 From: Giovanni Meo <gmeo@cisco.com>
 Date: Tue, 5 Aug 2014 15:52:22 +0200
 Subject: [PATCH] Remove reference to stale model-flow-management
 
 - Remove reference to an artifact that is no longer created in
 controller
+- Fixing a whitespace issue on the feature.xml file that could cause
+issues downstream on a build
 
 Change-Id: I6fa09234a23760220e32df689d0728b579ba34f6
 Signed-off-by: Giovanni Meo <gmeo@cisco.com>
 ---
- commons/parent/pom.xml               | 5 -----
- openstack/net-virt-providers/pom.xml | 6 +-----
- 2 files changed, 1 insertion(+), 10 deletions(-)
+ commons/integrationtest/pom.xml          | 7 -------
+ commons/parent/pom.xml                   | 5 -----
+ features/src/main/resources/features.xml | 4 ++--
+ openstack/net-virt-providers/pom.xml     | 6 +-----
+ 4 files changed, 3 insertions(+), 19 deletions(-)
 
-diff --git a/commons/parent/pom.xml b/commons/parent/pom.xml
-index b51b7f1..768edfa 100755
---- a/commons/parent/pom.xml
-+++ b/commons/parent/pom.xml
-@@ -152,9 +152,4 @@
-       </dependency>
-       <dependency>
-         <groupId>org.opendaylight.controller.model</groupId>
--        <artifactId>model-flow-management</artifactId>
--        <version>${mdsal.version}</version>
--      </dependency>
--      <dependency>
--        <groupId>org.opendaylight.controller.model</groupId>
-         <artifactId>model-flow-service</artifactId>
-diff --git a/openstack/net-virt-providers/pom.xml b/openstack/net-virt-providers/pom.xml
-index b91b6ce..3e137ff 100644
---- a/openstack/net-virt-providers/pom.xml
-+++ b/openstack/net-virt-providers/pom.xml
-@@ -42,10 +42,6 @@
-         </dependency>
-         <dependency>
-             <groupId>org.opendaylight.controller.model</groupId>
--            <artifactId>model-flow-management</artifactId>
--        </dependency>
--        <dependency>
--            <groupId>org.opendaylight.controller.model</groupId>
-             <artifactId>model-flow-service</artifactId>
-         </dependency>
-         <dependency>
-@@ -114,4 +110,4 @@
-             </plugin>
-         </plugins>
-     </build>
--</project>
-\ No newline at end of file
-+</project>
 diff --git a/commons/integrationtest/pom.xml b/commons/integrationtest/pom.xml
-index 2c89a47..756a134 100644
+index 4a8816c..fa43de9 100644
 --- a/commons/integrationtest/pom.xml
 +++ b/commons/integrationtest/pom.xml
 @@ -725,37 +725,30 @@
@@ -91,6 +59,63 @@ index 2c89a47..756a134 100644
      </dependency>
  
      <!-- Add Pax Exam -->
+diff --git a/commons/parent/pom.xml b/commons/parent/pom.xml
+index 86c9bd1..2e7805d 100755
+--- a/commons/parent/pom.xml
++++ b/commons/parent/pom.xml
+@@ -152,11 +152,6 @@
+       </dependency>
+       <dependency>
+         <groupId>org.opendaylight.controller.model</groupId>
+-        <artifactId>model-flow-management</artifactId>
+-        <version>${mdsal.version}</version>
+-      </dependency>
+-      <dependency>
+-        <groupId>org.opendaylight.controller.model</groupId>
+         <artifactId>model-flow-service</artifactId>
+         <version>${mdsal.version}</version>
+       </dependency>
+diff --git a/features/src/main/resources/features.xml b/features/src/main/resources/features.xml
+index 1794058..27defdb 100644
+--- a/features/src/main/resources/features.xml
++++ b/features/src/main/resources/features.xml
+@@ -39,11 +39,11 @@
+         <bundle>mvn:org.opendaylight.ovsdb/northbound/${ovsdb.northbound.version}</bundle>
+     </feature>
+ 
+-<!-- 
++<!--
+     <feature name="odl-ovsdb-openstack" description="OpenDaylight :: OVSDB :: OpenStack Network Virtualization" version='${ovsdb.openstack.netvirt.version}'>
+         <feature version="${ovsdb.plugin.version}">odl-ovsdb-plugin</feature>
+         <bundle>mvn:org.opendaylight.ovsdb/net-virt/${ovsdb.openstack.netvirt.version}</bundle>
+         <bundle>mvn:org.opendaylight.ovsdb/net-virt-providers/${ovsdb.openstack.netvirt.providers.version}</bundle>
+     </feature>
+ -->
+-</features>
+\ No newline at end of file
++</features>
+diff --git a/openstack/net-virt-providers/pom.xml b/openstack/net-virt-providers/pom.xml
+index b91b6ce..3e137ff 100644
+--- a/openstack/net-virt-providers/pom.xml
++++ b/openstack/net-virt-providers/pom.xml
+@@ -42,10 +42,6 @@
+         </dependency>
+         <dependency>
+             <groupId>org.opendaylight.controller.model</groupId>
+-            <artifactId>model-flow-management</artifactId>
+-        </dependency>
+-        <dependency>
+-            <groupId>org.opendaylight.controller.model</groupId>
+             <artifactId>model-flow-service</artifactId>
+         </dependency>
+         <dependency>
+@@ -114,4 +110,4 @@
+             </plugin>
+         </plugins>
+     </build>
+-</project>
+\ No newline at end of file
++</project>
 -- 
 2.0.3
 

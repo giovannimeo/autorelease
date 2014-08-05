@@ -1,0 +1,52 @@
+From 46314d1d2cc908da4ade482d84acd5eafb83c1e2 Mon Sep 17 00:00:00 2001
+From: Giovanni Meo <gmeo@cisco.com>
+Date: Tue, 5 Aug 2014 18:27:04 +0200
+Subject: [PATCH] Tell to IT the version of object-api in BGPCEP
+
+Change-Id: Ia377178f883a2747f2663e728c8752cf9137a52f
+Signed-off-by: Giovanni Meo <gmeo@cisco.com>
+---
+ commons/parent/pom.xml    | 11 ++++++++++-
+ integration-tests/pom.xml |  4 ++++
+ 2 files changed, 14 insertions(+), 1 deletion(-)
+
+diff --git a/commons/parent/pom.xml b/commons/parent/pom.xml
+index e097c77..c0005a0 100644
+--- a/commons/parent/pom.xml
++++ b/commons/parent/pom.xml
+@@ -285,7 +285,16 @@
+                 <artifactId>yang-common</artifactId>
+                 <version>${yangtools.version}</version>
+             </dependency>
+-
++            <dependency>
++              <groupId>org.opendaylight.yangtools</groupId>
++              <artifactId>object-cache-api</artifactId>
++              <version>${yangtools.version}</version>
++            </dependency>
++            <dependency>
++              <groupId>org.opendaylight.yangtools</groupId>
++              <artifactId>object-cache-guava</artifactId>
++              <version>${yangtools.version}</version>
++            </dependency>
+             <!-- Controller infrastructure -->
+             <dependency>
+                 <groupId>org.opendaylight.controller</groupId>
+diff --git a/integration-tests/pom.xml b/integration-tests/pom.xml
+index 3473d88..2012c42 100644
+--- a/integration-tests/pom.xml
++++ b/integration-tests/pom.xml
+@@ -367,6 +367,10 @@
+             <scope>test</scope>
+             <type>test-jar</type>
+         </dependency>
++        <dependency>
++          <groupId>org.opendaylight.yangtools</groupId>
++          <artifactId>object-cache-api</artifactId>
++        </dependency>
+ 
+ 
+     </dependencies>
+-- 
+2.0.3
+
