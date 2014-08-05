@@ -1,4 +1,4 @@
-From 4024555bd27ad86ea2614a0f3a62a7155f67822a Mon Sep 17 00:00:00 2001
+From e6397af913e29f525f18875cb948424a2b57f0a8 Mon Sep 17 00:00:00 2001
 From: Giovanni Meo <gmeo@cisco.com>
 Date: Mon, 4 Aug 2014 18:22:11 +0200
 Subject: [PATCH] Remove old dependencies
@@ -11,6 +11,8 @@ by a variable, lets specify the version in the dependency management
 in common pom
 - Replace in netconf-cli the reference from yang-data-json to
 yang-data-composite-node
+- Removed whitespaces in config-netty-config that would cause
+checkstyle issues downstream otherwise
 
 Change-Id: I866e4b36e71c004b925bd181412ff4df91b3091f
 Signed-off-by: Giovanni Meo <gmeo@cisco.com>
@@ -20,6 +22,7 @@ Signed-off-by: Giovanni Meo <gmeo@cisco.com>
  features/netconf/pom.xml                           |   2 -
  features/protocol-framework/pom.xml                |   1 -
  opendaylight/commons/opendaylight/pom.xml          |  66 +++-
+ .../src/main/resources/initial/00-netty.xml        |   4 +-
  .../distribution/opendaylight-karaf/pom.xml        |   3 -
  .../flow-management-compatibility/pom.xml          |  74 -----
  .../md/frm/compatibility/ConfigurationReader.java  |  62 ----
@@ -45,7 +48,7 @@ Signed-off-by: Giovanni Meo <gmeo@cisco.com>
  .../md-sal/topology-lldp-discovery/pom.xml         |   4 -
  opendaylight/netconf/netconf-cli/pom.xml           |   4 +-
  .../cli/writer/impl/NormalizedNodeWriter.java      |   2 +-
- 30 files changed, 58 insertions(+), 1993 deletions(-)
+ 31 files changed, 60 insertions(+), 1995 deletions(-)
  delete mode 100644 opendaylight/md-sal/compatibility/flow-management-compatibility/pom.xml
  delete mode 100644 opendaylight/md-sal/compatibility/flow-management-compatibility/src/main/java/org/opendaylight/controller/md/frm/compatibility/ConfigurationReader.java
  delete mode 100644 opendaylight/md-sal/compatibility/flow-management-compatibility/src/main/java/org/opendaylight/controller/md/frm/compatibility/FRMRuntimeDataProvider.java
@@ -219,6 +222,28 @@ index a7bbbe7..0ac91da 100644
      </dependencies>
    </dependencyManagement>
  
+diff --git a/opendaylight/config/config-netty-config/src/main/resources/initial/00-netty.xml b/opendaylight/config/config-netty-config/src/main/resources/initial/00-netty.xml
+index 686d363..2bf5b36 100644
+--- a/opendaylight/config/config-netty-config/src/main/resources/initial/00-netty.xml
++++ b/opendaylight/config/config-netty-config/src/main/resources/initial/00-netty.xml
+@@ -15,7 +15,7 @@
+         <capability>urn:opendaylight:params:xml:ns:yang:controller:netty:timer?module=netty-timer&amp;revision=2013-11-19</capability>
+     </required-capabilities>
+     <configuration>
+-    
++
+         <data xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+             <modules xmlns="urn:opendaylight:params:xml:ns:yang:controller:config">
+                 <module>
+@@ -35,7 +35,7 @@
+                     <name>singleton</name>
+                 </module>
+             </modules>
+-            
++
+             <services xmlns="urn:opendaylight:params:xml:ns:yang:controller:config">
+                 <service>
+                     <type xmlns:netty="urn:opendaylight:params:xml:ns:yang:controller:netty">netty:netty-threadgroup</type>
 diff --git a/opendaylight/distribution/opendaylight-karaf/pom.xml b/opendaylight/distribution/opendaylight-karaf/pom.xml
 index 977fab1..5effbb0 100644
 --- a/opendaylight/distribution/opendaylight-karaf/pom.xml
