@@ -1,67 +1,32 @@
-From 75d6d9d4a03252325fe621487b16ab05fe5070f8 Mon Sep 17 00:00:00 2001
+From 23b0158dfa5361bf5568a193bec6649af25da98f Mon Sep 17 00:00:00 2001
 From: Giovanni Meo <gmeo@cisco.com>
-Date: Mon, 16 Jun 2014 17:10:29 +0200
-Subject: [PATCH] Temporarely remove lispflowmapping
+Date: Tue, 5 Aug 2014 20:14:39 +0200
+Subject: [PATCH] Removed unused bundle
 
-- lispflowmapping is not ready, temporarely removing it
-
+Change-Id: I3b92cc7acc56e5ec3dde941f5524e2c580d4bece
 Signed-off-by: Giovanni Meo <gmeo@cisco.com>
 ---
- distributions/serviceprovider/pom.xml | 41 -----------------------------------
- 1 file changed, 41 deletions(-)
+ distributions/virtualization/pom.xml | 7 -------
+ 1 file changed, 7 deletions(-)
 
-diff --git a/distributions/serviceprovider/pom.xml b/distributions/serviceprovider/pom.xml
-index 686337a..65c18fc 100644
---- a/distributions/serviceprovider/pom.xml
-+++ b/distributions/serviceprovider/pom.xml
-@@ -429,47 +429,6 @@ see https://git.opendaylight.org/gerrit/#/c/390/
+diff --git a/distributions/virtualization/pom.xml b/distributions/virtualization/pom.xml
+index 401eef0..7959558 100644
+--- a/distributions/virtualization/pom.xml
++++ b/distributions/virtualization/pom.xml
+@@ -29,13 +29,6 @@ see https://git.opendaylight.org/gerrit/#/c/390/
+       <scope>provided</scope>
      </dependency>
  
-     <!-- lispflowmapping -->
--	<dependency>
--      <groupId>org.opendaylight.lispflowmapping</groupId>
--      <artifactId>mappingservice.yangmodel</artifactId>
--      <version>${lispflowmapping.version}</version>
+-    <!-- ovsdb --> 
+-    <dependency>
+-      <groupId>org.opendaylight.ovsdb</groupId>
+-      <artifactId>neutron</artifactId>
+-      <version>0.7.0-SNAPSHOT</version>
 -    </dependency>
 -
--    <dependency>
--      <groupId>org.opendaylight.lispflowmapping</groupId>
--      <artifactId>mappingservice.api</artifactId>
--      <version>${lispflowmapping.version}</version>
--    </dependency>
--    
--    <dependency>
--      <groupId>org.opendaylight.lispflowmapping</groupId>
--      <artifactId>mappingservice.config</artifactId>
--      <version>${lispflowmapping.version}</version>
--    </dependency>
--
--    <dependency>
--      <groupId>org.opendaylight.lispflowmapping</groupId>
--      <artifactId>mappingservice.implementation</artifactId>
--      <version>${lispflowmapping.version}</version>
--    </dependency>
--    
--    <dependency>
--      <groupId>org.opendaylight.lispflowmapping</groupId>
--      <artifactId>mappingservice.clusterdao</artifactId>
--      <version>${lispflowmapping.version}</version>
--    </dependency>
--
--    <dependency>
--      <groupId>org.opendaylight.lispflowmapping</groupId>
--      <artifactId>mappingservice.northbound</artifactId>
--      <version>${lispflowmapping.version}</version>
--    </dependency>
--
--    <dependency>
--      <groupId>org.opendaylight.lispflowmapping</groupId>
--      <artifactId>mappingservice.southbound</artifactId>
--      <version>${lispflowmapping.version}</version>
--    </dependency>
+     <!-- vtn -->
  
-     <!--SNMP4SDN-->
      <dependency>
 -- 
-1.9.3
+2.0.3
 
