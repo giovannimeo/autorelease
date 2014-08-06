@@ -71,8 +71,12 @@ public class DefaultWagonUpload
             File source = new File( fileset.getDirectory(), files[i] );
 
             logger.info( "Uploading " + source + " to " + url + relativeDestPath + " ..." );
-
-            wagon.put( source, relativeDestPath );
+            try {
+                wagon.put( source, relativeDestPath );
+            } catch (Exception e) {
+                // TODO: Check if the file exists then ignore the error
+                logger.info( "Uploading run in exception .. ignoring it because not on METADATA");
+            }
         }
 
     }
