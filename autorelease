@@ -96,8 +96,8 @@ fi
 cd "${autoreleasebasedir}/versions-plugin"
 mvn -U ${settingsopts} -DaltDeploymentRepository="localdir::default::file://${toolsrepodir}" clean deploy
 
-# build wagen-maven-plugin
-cd "${autoreleasebasedir}/wagen-maven-plugin"
+# build wagon-maven-plugin
+cd "${autoreleasebasedir}/wagon-maven-plugin"
 mvn -U ${settingsopts} -DaltDeploymentRepository="localdir::default::file://${toolsrepodir}" clean deploy
 
 firstrun=1
