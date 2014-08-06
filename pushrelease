@@ -16,6 +16,7 @@ mavenprofiles="integrationtests"
 mavenDeployTargetURL=""
 mavenDeployTargetID=""
 globalmavensettings=""
+localm2repo="${autoreleasebasedir}/.m2repo"
 
 function usage {
     echo "Usage: $0 [--repositoryList <space separated repository list>] [--mavenDeployTargetURL <maven repo URL> --mavenDeployTargetID <maven repo ID>] [--globalmavensettings <settings file>]"
@@ -82,7 +83,7 @@ if [ "${mavenDeployTargetID}" == "" ]; then
     exit 0
 fi
 
-mvn ${settingsopts} -Dmaven.repo.local="${localm2repo}" -Dwagon.source="file://${stagingreleasesm2repo}" -Dwagon.target="${mavenDeployTargetURL}" -Dwagon.targetId="${mavenDeployTargetID}" wagon:merge-maven-repos -l "${logdir}/push-merge-maven-repos.log"
+mvn ${settingsopts} -Dwagon.source="file://${stagingreleasesm2repo}" -Dwagon.target="${mavenDeployTargetURL}" -Dwagon.targetId="${mavenDeployTargetID}" org.codehaus.mojo:wagon-maven-plugin:1.1-SNAPSHOT:merge-maven-repos -l "${logdir}/push-merge-maven-repos.log"
 
 # On success exit with result 0
 exit 0

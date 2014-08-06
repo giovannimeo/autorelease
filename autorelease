@@ -92,7 +92,12 @@ else
 fi
 
 # Time to rebuild the tools, honoring the settings file though
+# build version-plugin
 cd "${autoreleasebasedir}/versions-plugin"
+mvn -U ${settingsopts} -DaltDeploymentRepository="localdir::default::file://${toolsrepodir}" clean deploy
+
+# build wagen-maven-plugin
+cd "${autoreleasebasedir}/wagen-maven-plugin"
 mvn -U ${settingsopts} -DaltDeploymentRepository="localdir::default::file://${toolsrepodir}" clean deploy
 
 firstrun=1
