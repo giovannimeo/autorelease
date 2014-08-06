@@ -30,8 +30,10 @@ domajor=0
 # This is used to set the git identity for the ODL build server to be
 # jenkins-<project>@opendaylight.org
 setgitidentity=0
+# build only tools
+toolsonly=0
 function usage {
-    echo "Usage: $0 [--restart_from <target>] [--repositoryList <space separated repository list>] [--odlreporoot <url of ODL repos or mirror of it>] [--onlyone] [--clean_repo] [--override_branch <repo to override> <branch to use>] [--profiles <profiles to activate>] [--domajor] [--setgitidentity] [--globalmavensettings <settings file>]"
+    echo "Usage: $0 [--restart_from <target>] [--repositoryList <space separated repository list>] [--odlreporoot <url of ODL repos or mirror of it>] [--onlyone] [--clean_repo] [--override_branch <repo to override> <branch to use>] [--profiles <profiles to activate>] [--domajor] [--setgitidentity] [--globalmavensettings <settings file>] [--toolsonly]"
     exit 1
 }
 
@@ -50,6 +52,7 @@ while true ; do
         --profiles) shift; mavenprofiles="$1"; shift;;
         --setgitidentity) setgitidentity=1; shift;;
         --globalmavensettings) shift; globalmavensettings="$1"; shift;;
+        --toolsonly) toolsonly=1; restart_from="foo"; shift;;
         -*) echo "Unknown option $1"; unknown_option=1; shift;;
         *) break ;;
     esac
@@ -99,6 +102,10 @@ mvn -U ${settingsopts} -DaltDeploymentRepository="localdir::default::file://${to
 # build wagon-maven-plugin
 cd "${autoreleasebasedir}/wagon-maven-plugin"
 mvn -U ${settingsopts} -DaltDeploymentRepository="localdir::default::file://${toolsrepodir}" clean deploy
+
+if [ "${toolsonly}" == "1" ]; then
+    exit 0
+fi
 
 firstrun=1
 for repouri in $repositoryList; do
