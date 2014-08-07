@@ -71,11 +71,37 @@ public class DefaultWagonUpload
             File source = new File( fileset.getDirectory(), files[i] );
 
             logger.info( "Uploading " + source + " to " + url + relativeDestPath + " ..." );
-            try {
-                wagon.put( source, relativeDestPath );
-            } catch (Exception e) {
-                // TODO: Check if the file exists then ignore the error
-                logger.info( "Uploading run in exception .. ignoring it because not on METADATA");
+            boolean checkReleaseDeploy = Boolean.getBoolean("checkReleaseDeploy");
+            boolean alreadyExisting = false;
+            if (checkReleaseDeploy) {
+                try {
+                    // Resources that need to be forced to upload
+                    // else the merge repo cannot be achieved
+                    if (relativeDestPath.endsWith("maven-metadata.xml") ||
+                        relativeDestPath.endsWith("maven-metadata.xml.md5") ||
+                        relativeDestPath.endsWith("maven-metadata.xml.sha1")) {
+                        alreadyExisting = false;
+                    } else {
+                        alreadyExisting = wagon.resourceExists(relativeDestPath);
+                    }
+                } catch (WagonException e) {
+                    // We cannot assume nothing, so better to let it try
+                    // the upload
+                    alreadyExisting = false;
+                }
+            } else {
+                // If we don't want to double check lets assume we
+                // want always to upload
+                alreadyExisting = false;
+            }
+
+            // Retry to upload the resource if not already present or
+            // if not one of those resources that must be re-uploaded
+            // to be successful like METADATAs
+            if (!alreadyExisting) {
+                wagon.put(source, relativeDestPath);
+            } else {
+                logger.info("... resource ALREADY EXISTS so SKIPPING!");
             }
         }
 
