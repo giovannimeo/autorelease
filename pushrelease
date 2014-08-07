@@ -84,6 +84,6 @@ if [ "${mavenDeployTargetID}" == "" ]; then
 fi
 
 mvn ${settingsopts} -DcheckReleaseDeploy=true -Dwagon.source="file://${stagingreleasesm2repo}" -Dwagon.target="${mavenDeployTargetURL}" -Dwagon.targetId="${mavenDeployTargetID}" org.codehaus.mojo:wagon-maven-plugin:1.1-SNAPSHOT:merge-maven-repos -l "${logdir}/push-merge-maven-repos.log"
-
+retcode=$?
 # On success exit with result 0
-exit 0
+exit $retcode
