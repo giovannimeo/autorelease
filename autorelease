@@ -32,8 +32,11 @@ domajor=0
 setgitidentity=0
 # build only tools
 toolsonly=0
+# clean the local m2repo on each run
+cleanlocalm2repo=0
+
 function usage {
-    echo "Usage: $0 [--restart_from <target>] [--repositoryList <space separated repository list>] [--odlreporoot <url of ODL repos or mirror of it>] [--onlyone] [--clean_repo] [--override_branch <repo to override> <branch to use>] [--profiles <profiles to activate>] [--domajor] [--setgitidentity] [--globalmavensettings <settings file>] [--toolsonly]"
+    echo "Usage: $0 [--restart_from <target>] [--repositoryList <space separated repository list>] [--odlreporoot <url of ODL repos or mirror of it>] [--onlyone] [--clean_repo] [--override_branch <repo to override> <branch to use>] [--profiles <profiles to activate>] [--domajor] [--setgitidentity] [--globalmavensettings <settings file>] [--toolsonly] [--cleanlocalm2repo]"
     exit 1
 }
 
@@ -41,6 +44,7 @@ unknown_option=0
 restart_from=""
 while true ; do
     case "$1" in
+        --cleanlocalm2repo) cleanlocalm2repo=1; shift;;
         --override_branch) shift; override_branch["$1"]="$2"; shift; shift;;
         --clean_repo) clean_repo=1; shift;;
         --domajor) domajor=1; shift;;
@@ -180,6 +184,10 @@ for repouri in $repositoryList; do
     extra_localrelease_args=""
     if [ ${domajor} == 1 ]; then
         extra_localrelease_args="${extra_localrelease_args} --domajor"
+    fi
+
+    if [ ${cleanlocalm2repo} == 1 ]; then
+        extra_localrelease_args="${extra_localrelease_args} --cleanlocalm2repo"
     fi
 
     if [ ! "${globalmavensettings}" == "" ]; then

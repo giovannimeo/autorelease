@@ -29,8 +29,11 @@ localm2repo="${basedir}/.m2repo"
 version_date_prefix=`date '+v%Y%m%d%H%M%S'`
 gitbundlerepo=""
 domajor=0
+# clean the local m2repo on each run
+cleanlocalm2repo=0
 while true ; do
     case "$1" in
+        --cleanlocalm2repo) cleanlocalm2repo=1; shift;;
         --localm2repo) shift; localm2repo="$1"; shift;;
         --settingsfile) shift; settingsfile="$1"; shift;;
         --domajor) domajor=1; shift;;
@@ -103,6 +106,11 @@ fi
 preparationbranch="preparation-branch-${lockedversion}"
 preparationtag="preparation-tag-${lockedversion}"
 
+if [ ${cleanlocalm2repo} == 1 ]; then
+    echo "Cleaning local m2repo before the preparation-branch build"
+    rm -rf "${localm2repo}"
+fi
+
 # Checkout new branch and try to prepare for the release
 # with the expected version number
 git checkout -f "${basebranch}" -b "${preparationbranch}" && mvn -Dmaven.repo.local="${localm2repo}" -Dorg.ops4j.pax.url.mvn.localRepository="${localm2repo}" ${settingsopts} -Dreleaseplugin.version=2.5 -Dmaven.release.version=2.5 -B org.apache.maven.plugins:maven-release-plugin:2.5:clean org.apache.maven.plugins:maven-release-plugin:2.5:prepare -DpushChanges=false -Dtag="${preparationtag}" -DcompletionGoals="help:system" -DpreparationGoals="clean install" -DignoreSnapshots=${ignoresnapshots} -P"${profiles}" -Darguments="-Dmaven.repo.local=\"${localm2repo}\" -Dorg.ops4j.pax.url.mvn.localRepository=\"${localm2repo}\" ${settingsopts} -P${profiles}" -l "${logsdir}/preparation-branch.log" || exit 1
@@ -132,6 +140,12 @@ else
     # have maven to create the tag
     sed -i '/^scm\.tag/d' release.properties
 fi
+
+if [ ${cleanlocalm2repo} == 1 ]; then
+    echo "Cleaning local m2repo before the autorelease-branch build"
+    rm -rf "${localm2repo}"
+fi
+
 # Now attempt to do a release prepare, this time the branch will be the one will be pushed as well
 # the tag that will be pushed
 git checkout -f "${basebranch}" -b "${localreleasebranch}" && mvn -Dmaven.repo.local="${localm2repo}" -Dorg.ops4j.pax.url.mvn.localRepository="${localm2repo}" ${settingsopts} -Dreleaseplugin.version=2.5 -Dmaven.release.version=2.5 -B org.apache.maven.plugins:maven-release-plugin:2.5:prepare -DpushChanges=false ${localreleasecommand} -DcompletionGoals="help:system" -DpreparationGoals="clean install" -DignoreSnapshots=${ignoresnapshots} "-P${profiles}" -Darguments="-Dmaven.repo.local=\"${localm2repo}\" -Dorg.ops4j.pax.url.mvn.localRepository=\"${localm2repo}\" ${settingsopts} -P${profiles}" -l "${logsdir}/localrelease-branch.log" || exit 1
@@ -157,6 +171,11 @@ git symbolic-ref refs/tags/nextdev refs/heads/${localreleasebranch}
 # Now save the repository in git bundle if a file is provided, including the localrelease branch and tag
 if [ ! "${gitbundlerepo}" == "" ]; then
     git bundle create "${gitbundlerepo}" "${releasetag}" "${preparationtag}" "${basebranch_initial}" "${basebranch}" "${localreleasebranch}" "${preparationbranch}" ${updateversiontag} refs/tags/scmtag refs/tags/nextdev
+fi
+
+if [ ${cleanlocalm2repo} == 1 ]; then
+    echo "Cleaning local m2repo before the localdeploy build"
+    rm -rf "${localm2repo}"
 fi
 
 # Now try to do a local deployment to make sure we can deploy the files appropriately
