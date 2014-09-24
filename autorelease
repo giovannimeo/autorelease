@@ -22,6 +22,7 @@ clean_repo=0
 globalmavensettings=""
 version_date_prefix=`date '+v%Y%m%d%H%M%S'`
 declare -A override_branch
+declare -A mvn_opts
 # Run only on one repository useful for incremental tests
 onlyone=0
 # Perform a major release, in this case the script will use the proper
@@ -36,7 +37,7 @@ toolsonly=0
 cleanlocalm2repo=0
 
 function usage {
-    echo "Usage: $0 [--restart_from <target>] [--repositoryList <space separated repository list>] [--odlreporoot <url of ODL repos or mirror of it>] [--onlyone] [--clean_repo] [--override_branch <repo to override> <branch to use>] [--profiles <profiles to activate>] [--domajor] [--setgitidentity] [--globalmavensettings <settings file>] [--toolsonly] [--cleanlocalm2repo]"
+    echo "Usage: $0 [--restart_from <target>] [--repositoryList <space separated repository list>] [--odlreporoot <url of ODL repos or mirror of it>] [--onlyone] [--clean_repo] [--override_branch <repo to override> <branch to use>] [--profiles <profiles to activate>] [--domajor] [--setgitidentity] [--globalmavensettings <settings file>] [--toolsonly] [--cleanlocalm2repo] [--mvn_opts <repo> <opts>]"
     exit 1
 }
 
@@ -46,6 +47,7 @@ while true ; do
     case "$1" in
         --cleanlocalm2repo) cleanlocalm2repo=1; shift;;
         --override_branch) shift; override_branch["$1"]="$2"; shift; shift;;
+        --mvn_opts) shift; mvn_opts["$1"]="$2"; shift; shift;;
         --clean_repo) clean_repo=1; shift;;
         --domajor) domajor=1; shift;;
         --restart_from) shift; restart_from="$1"; shift;;
@@ -192,6 +194,11 @@ for repouri in $repositoryList; do
 
     if [ ! "${globalmavensettings}" == "" ]; then
         extra_localrelease_args="${extra_localrelease_args} --globalmavensettings \"${globalmavensettings}\""
+    fi
+
+    if [ ! "${mvn_opts[${repo}]}" == "" ]; then
+        echo "Add extra mvn opts for repo:${repo} ${mvn_opts[${repo}]}"
+        extra_localrelease_args="${extra_localrelease_args} --mvn_opts \"${mvn_opts[${repo}]}\""
     fi
 
     # Before proceeding allow to pre-populate the so far available

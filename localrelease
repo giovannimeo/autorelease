@@ -6,7 +6,7 @@
 # Very much needed for GIT repositories
 
 function usage {
-    echo "Usage: $0 [--ignoresnapshots] [--debug] [--localrepodir <local repo directory>] [--stagingrepodir <staging repo directory>] [--profiles <profiles to enable>] [--logsdir <log directory>] [--domajor] [--globalmavensettings <settings file>]"
+    echo "Usage: $0 [--ignoresnapshots] [--debug] [--localrepodir <local repo directory>] [--stagingrepodir <staging repo directory>] [--profiles <profiles to enable>] [--logsdir <log directory>] [--domajor] [--globalmavensettings <settings file>] [--mvn_opts <opts>]"
     exit 1
 }
 
@@ -29,10 +29,12 @@ localm2repo="${basedir}/.m2repo"
 version_date_prefix=`date '+v%Y%m%d%H%M%S'`
 gitbundlerepo=""
 domajor=0
+mvn_opts=""
 # clean the local m2repo on each run
 cleanlocalm2repo=0
 while true ; do
     case "$1" in
+        --mvn_opts) shift; mvn_opts="$1"; shift;;
         --cleanlocalm2repo) cleanlocalm2repo=1; shift;;
         --localm2repo) shift; localm2repo="$1"; shift;;
         --settingsfile) shift; settingsfile="$1"; shift;;
@@ -67,6 +69,7 @@ fi
 echo "LOCALRepo Directory is: ${localrepodir}"
 echo "STAGINGRepo Directory is: ${stagingrepodir}"
 echo "SettingOpts: ${settingsopts}"
+echo "MvnOpts: ${mvn_opts}"
 # Make sure to escape /\: so if you want to get \: you have to write \\\:
 #localscm="scm\\\:git\\\:ssh\\\:\/\/xnc-build.cisco.com\/gerrit\\\:29418\/odp-openflowjava-mirror"
 
@@ -113,7 +116,7 @@ fi
 
 # Checkout new branch and try to prepare for the release
 # with the expected version number
-git checkout -f "${basebranch}" -b "${preparationbranch}" && mvn -Dmaven.repo.local="${localm2repo}" -Dorg.ops4j.pax.url.mvn.localRepository="${localm2repo}" ${settingsopts} -Dreleaseplugin.version=2.5 -Dmaven.release.version=2.5 -B org.apache.maven.plugins:maven-release-plugin:2.5:clean org.apache.maven.plugins:maven-release-plugin:2.5:prepare -DpushChanges=false -Dtag="${preparationtag}" -DcompletionGoals="help:system" -DpreparationGoals="clean install" -DignoreSnapshots=${ignoresnapshots} -P"${profiles}" -Darguments="-Dmaven.repo.local=\"${localm2repo}\" -Dorg.ops4j.pax.url.mvn.localRepository=\"${localm2repo}\" ${settingsopts} -P${profiles}" -l "${logsdir}/preparation-branch.log" || exit 1
+git checkout -f "${basebranch}" -b "${preparationbranch}" && mvn -Dmaven.repo.local="${localm2repo}" -Dorg.ops4j.pax.url.mvn.localRepository="${localm2repo}" ${settingsopts} ${mvn_opts} -Dreleaseplugin.version=2.5 -Dmaven.release.version=2.5 -B org.apache.maven.plugins:maven-release-plugin:2.5:clean org.apache.maven.plugins:maven-release-plugin:2.5:prepare -DpushChanges=false -Dtag="${preparationtag}" -DcompletionGoals="help:system" -DpreparationGoals="clean install" -DignoreSnapshots=${ignoresnapshots} -P"${profiles}" -Darguments="-Dmaven.repo.local=\"${localm2repo}\" -Dorg.ops4j.pax.url.mvn.localRepository=\"${localm2repo}\" ${settingsopts} ${mvn_opts} -P${profiles}" -l "${logsdir}/preparation-branch.log" || exit 1
 
 # Remove completedPhase so we can reuse the release.properties from scratch
 sed -i '/^completedPhase/d' release.properties
@@ -148,7 +151,7 @@ fi
 
 # Now attempt to do a release prepare, this time the branch will be the one will be pushed as well
 # the tag that will be pushed
-git checkout -f "${basebranch}" -b "${localreleasebranch}" && mvn -Dmaven.repo.local="${localm2repo}" -Dorg.ops4j.pax.url.mvn.localRepository="${localm2repo}" ${settingsopts} -Dreleaseplugin.version=2.5 -Dmaven.release.version=2.5 -B org.apache.maven.plugins:maven-release-plugin:2.5:prepare -DpushChanges=false ${localreleasecommand} -DcompletionGoals="help:system" -DpreparationGoals="clean install" -DignoreSnapshots=${ignoresnapshots} "-P${profiles}" -Darguments="-Dmaven.repo.local=\"${localm2repo}\" -Dorg.ops4j.pax.url.mvn.localRepository=\"${localm2repo}\" ${settingsopts} -P${profiles}" -l "${logsdir}/localrelease-branch.log" || exit 1
+git checkout -f "${basebranch}" -b "${localreleasebranch}" && mvn -Dmaven.repo.local="${localm2repo}" -Dorg.ops4j.pax.url.mvn.localRepository="${localm2repo}" ${settingsopts} ${mvn_opts} -Dreleaseplugin.version=2.5 -Dmaven.release.version=2.5 -B org.apache.maven.plugins:maven-release-plugin:2.5:prepare -DpushChanges=false ${localreleasecommand} -DcompletionGoals="help:system" -DpreparationGoals="clean install" -DignoreSnapshots=${ignoresnapshots} "-P${profiles}" -Darguments="-Dmaven.repo.local=\"${localm2repo}\" -Dorg.ops4j.pax.url.mvn.localRepository=\"${localm2repo}\" ${settingsopts} ${mvn_opts} -P${profiles}" -l "${logsdir}/localrelease-branch.log" || exit 1
 
 ## By default pick a version for the gitbundles that is inline with
 ## the version of the bundles created, so to easily correlate
@@ -179,12 +182,12 @@ if [ ${cleanlocalm2repo} == 1 ]; then
 fi
 
 # Now try to do a local deployment to make sure we can deploy the files appropriately
-git checkout -f "${releasetag}" && mvn -Dmaven.repo.local="${localm2repo}" -Dorg.ops4j.pax.url.mvn.localRepository="${localm2repo}" -DaltDeploymentRepository="localdir::default::file:///${localrepodir}" ${settingsopts} "-P${profiles}" clean javadoc:jar source:jar deploy -l "${logsdir}/localdeploy.log" || exit 1
+git checkout -f "${releasetag}" && mvn -Dmaven.repo.local="${localm2repo}" -Dorg.ops4j.pax.url.mvn.localRepository="${localm2repo}" -DaltDeploymentRepository="localdir::default::file:///${localrepodir}" ${settingsopts} ${mvn_opts} "-P${profiles}" clean javadoc:jar source:jar deploy -l "${logsdir}/localdeploy.log" || exit 1
 
 # Deploy also the git bundlerepo so we keep in the same context
 if [ ! "${gitbundlerepo}" == "" ]; then
     project=`basename "${gitbundlerepo}"`
-    mvn -Dmaven.repo.local="${localm2repo}" ${settingsopts} -Durl="file:///${localrepodir}"  -DrepositoryId="localdir" -DgroupId="org.opendaylight.gitbundles" -DartifactId="${project}" -Dversion="${gitbundleversion}" -Dpackaging="gitbundle" -Dclassifier="gitbundle" -Dfile="${gitbundlerepo}" deploy:deploy-file -l "${logsdir}/localdeploy_gitbundle.log"
+    mvn -Dmaven.repo.local="${localm2repo}" ${settingsopts} ${mvn_opts} -Durl="file:///${localrepodir}"  -DrepositoryId="localdir" -DgroupId="org.opendaylight.gitbundles" -DartifactId="${project}" -Dversion="${gitbundleversion}" -Dpackaging="gitbundle" -Dclassifier="gitbundle" -Dfile="${gitbundlerepo}" deploy:deploy-file -l "${logsdir}/localdeploy_gitbundle.log"
 fi
 echo "DONE LOCALRELEASE last result is: $?"
 
