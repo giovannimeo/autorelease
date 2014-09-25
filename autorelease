@@ -100,6 +100,17 @@ else
     skip_initial=1
 fi
 
+if [ "${toolsonly}" == "1" ]; then
+    rm -f "${settingsfile}"
+    if [ ! -f "${settingsfile}" ]; then
+        echo "Recreating settings file"
+        # Now lets create localreleasesettings.xml
+        cp "${settingstemplatefile}" "${settingsfile}"
+        sed -i "s!#STAGINGREPODIR#!${stagingreleasesm2repo}!g" "${settingsfile}"
+        sed -i "s!#TOOLSREPODIR#!${toolsrepodir}!g" "${settingsfile}"
+    fi
+fi
+
 # Time to rebuild the tools, honoring the settings file though
 # build version-plugin
 cd "${autoreleasebasedir}/versions-plugin"
